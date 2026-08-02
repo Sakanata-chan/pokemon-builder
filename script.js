@@ -595,6 +595,18 @@ async function exportSlotAsImage(index) {
 
 // --- LOCALSTORAGE & JSON EXPORT/IMPORT ---
 
+async function loadTeamCache(team) {
+  const promises = [];
+  team.forEach(slot => {
+    if (!slot.pokemon) return;
+    if (slot.ability) promises.push(fetchAbilityDetails(slot.ability));
+    slot.moves.forEach(moveName => {
+      if (moveName) promises.push(fetchMoveDetails(moveName));
+    });
+  });
+  await Promise.all(promises);
+}
+
 function saveTeamToLocalStorage() {
   const existingSave = localStorage.getItem('pokemon_team_builder_save');
 
@@ -608,10 +620,9 @@ function saveTeamToLocalStorage() {
   // Removed success alert
 }
 
-function loadTeamFromLocalStorage() {
+async function loadTeamFromLocalStorage() {
   const saved = localStorage.getItem('pokemon_team_builder_save');
   
-  // Kept alert for when no saved team exists
   if (!saved) {
     alert('No saved team found in browser storage.');
     return;
@@ -619,9 +630,10 @@ function loadTeamFromLocalStorage() {
   
   try {
     teamState = JSON.parse(saved);
+    await loadTeamCache(teamState); // Pre-fetch move/ability details into cache
     refreshUI();
-    // Removed success alert
   } catch (e) {
+    console.error("Load error:", e);
     alert('Failed to load saved team.');
   }
 }
@@ -641,13 +653,13 @@ function importTeamJSON(event) {
   if (!file) return;
 
   const reader = new FileReader();
-  reader.onload = (e) => {
+  reader.onload = async (e) => {
     try {
       const importedState = JSON.parse(e.target.result);
       if (Array.isArray(importedState) && importedState.length === 6) {
         teamState = importedState;
+        await loadTeamCache(teamState); // Pre-fetch move/ability details into cache
         refreshUI();
-        alert('Team imported successfully!');
       } else {
         alert('Invalid JSON structure. Must be a 6-slot team configuration.');
       }
