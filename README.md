@@ -1,5 +1,3 @@
-Here is a polished, professional `README.md` formatted specifically for your GitHub repository.
-
 ---
 
 # ⚔️ Pokémon Team Builder (Gen 1 – 5)
