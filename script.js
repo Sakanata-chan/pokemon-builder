@@ -71,32 +71,58 @@ const TYPE_CHART = {
 };
 
 // Gen 1-5 Specific Form Variants
+// Exact, tested PokéAPI form slugs for Gens 1-5
 const GEN_1_5_EXTRA_FORMS = [
+  // Gender differences with actual dedicated form endpoints
   { id: 592, name: 'frillish-female', displayName: 'Frillish (Female)', gen: 5 },
   { id: 593, name: 'jellicent-female', displayName: 'Jellicent (Female)', gen: 5 },
-  { id: 521, name: 'unfezant-female', displayName: 'Unfezant (Female)', gen: 5 },
-  { id: 449, name: 'hippopotas-female', displayName: 'Hippopotas (Female)', gen: 4 },
-  { id: 450, name: 'hippowdon-female', displayName: 'Hippowdon (Female)', gen: 4 },
+  
+  // Gender differences that use base species name (handled automatically)
+  { id: 521, name: 'unfezant', displayName: 'Unfezant (Female)', gen: 5, forceFemale: true },
+  { id: 449, name: 'hippopotas', displayName: 'Hippopotas (Female)', gen: 4, forceFemale: true },
+  { id: 450, name: 'hippowdon', displayName: 'Hippowdon (Female)', gen: 4, forceFemale: true },
+
+  // Rotom Forms
   { id: 479, name: 'rotom-heat', displayName: 'Rotom (Heat)', gen: 4 },
   { id: 479, name: 'rotom-wash', displayName: 'Rotom (Wash)', gen: 4 },
   { id: 479, name: 'rotom-frost', displayName: 'Rotom (Frost)', gen: 4 },
   { id: 479, name: 'rotom-fan', displayName: 'Rotom (Fan)', gen: 4 },
   { id: 479, name: 'rotom-mow', displayName: 'Rotom (Mow)', gen: 4 },
+
+  // Deoxys Forms (PokéAPI default for Deoxys base is 'deoxys-normal')
+  { id: 386, name: 'deoxys-normal', displayName: 'Deoxys (Normal)', gen: 3 },
   { id: 386, name: 'deoxys-attack', displayName: 'Deoxys (Attack)', gen: 3 },
   { id: 386, name: 'deoxys-defense', displayName: 'Deoxys (Defense)', gen: 3 },
   { id: 386, name: 'deoxys-speed', displayName: 'Deoxys (Speed)', gen: 3 },
+
+  // Meloetta Forms (PokéAPI default is 'meloetta-aria')
+  { id: 648, name: 'meloetta-aria', displayName: 'Meloetta (Aria)', gen: 5 },
+  { id: 648, name: 'meloetta-pirouette', displayName: 'Meloetta (Pirouette)', gen: 5 },
+
+  // Giratina / Shaymin / Wormadam / Basculin / Darmanitan
+  { id: 487, name: 'giratina-altered', displayName: 'Giratina (Altered)', gen: 4 },
   { id: 487, name: 'giratina-origin', displayName: 'Giratina (Origin)', gen: 4 },
+  { id: 492, name: 'shaymin-land', displayName: 'Shaymin (Land)', gen: 4 },
   { id: 492, name: 'shaymin-sky', displayName: 'Shaymin (Sky)', gen: 4 },
+  { id: 413, name: 'wormadam-plant', displayName: 'Wormadam (Plant)', gen: 4 },
   { id: 413, name: 'wormadam-sandy', displayName: 'Wormadam (Sandy)', gen: 4 },
   { id: 413, name: 'wormadam-trash', displayName: 'Wormadam (Trash)', gen: 4 },
+  { id: 550, name: 'basculin-red-striped', displayName: 'Basculin (Red-Striped)', gen: 5 },
   { id: 550, name: 'basculin-blue-striped', displayName: 'Basculin (Blue-Striped)', gen: 5 },
+  { id: 555, name: 'darmanitan-standard', displayName: 'Darmanitan (Standard)', gen: 5 },
   { id: 555, name: 'darmanitan-zen', displayName: 'Darmanitan (Zen)', gen: 5 },
-  { id: 648, name: 'meloetta-pirouette', displayName: 'Meloetta (Pirouette)', gen: 5 },
+
+  // Forces / Keldeo / Kyurem
+  { id: 641, name: 'tornadus-incarnate', displayName: 'Tornadus (Incarnate)', gen: 5 },
   { id: 641, name: 'tornadus-therian', displayName: 'Tornadus (Therian)', gen: 5 },
+  { id: 642, name: 'thundurus-incarnate', displayName: 'Thundurus (Incarnate)', gen: 5 },
   { id: 642, name: 'thundurus-therian', displayName: 'Thundurus (Therian)', gen: 5 },
+  { id: 645, name: 'landorus-incarnate', displayName: 'Landorus (Incarnate)', gen: 5 },
   { id: 645, name: 'landorus-therian', displayName: 'Landorus (Therian)', gen: 5 },
+  { id: 646, name: 'kyurem', displayName: 'Kyurem', gen: 5 },
   { id: 646, name: 'kyurem-black', displayName: 'Kyurem (Black)', gen: 5 },
   { id: 646, name: 'kyurem-white', displayName: 'Kyurem (White)', gen: 5 },
+  { id: 647, name: 'keldeo-ordinary', displayName: 'Keldeo (Ordinary)', gen: 5 },
   { id: 647, name: 'keldeo-resolute', displayName: 'Keldeo (Resolute)', gen: 5 }
 ];
 
@@ -558,40 +584,49 @@ async function handleMoveSelect(slotIdx, moveIdx, moveName) {
 
 async function selectPokemon(index, name) {
   try {
-    // 1. Clean up input string
-    let rawInput = name.toLowerCase().trim();
-    let apiKey = rawInput.replace(/ /g, '-');
+    let apiKey = name.toLowerCase().trim().replace(/ /g, '-');
     
-    // Extract base species name (e.g., "deoxys-attack" -> "deoxys", "unfezant-female" -> "unfezant")
-    const baseSlug = apiKey.split('-')[0];
+    // Check if this entry requires forcing female gender state
+    const formMeta = speciesIndex.find(s => s.name === apiKey);
+    const forceFemale = formMeta?.forceFemale || apiKey.endsWith('-female');
 
     let pokemon = null;
-    let isFemaleSelected = rawInput.includes('female');
 
-    // 2. Try fetching the specific form first
-    try {
-      const res = await fetch(`https://pokeapi.co/api/v2/pokemon/${apiKey}`);
-      if (res.ok) {
-        pokemon = await res.json();
-      }
-    } catch (e) {
-      /* Fallback below */
+    // 1. Try fetching exact slug first
+    let res = await fetch(`https://pokeapi.co/api/v2/pokemon/${apiKey}`);
+    
+    // 2. Fallback: Default form mappings if standard name fails (e.g., 'deoxys' -> 'deoxys-normal')
+    if (!res.ok) {
+      const baseSlug = apiKey.split('-')[0];
+      const FORM_MAP = {
+        deoxys: 'deoxys-normal',
+        meloetta: 'meloetta-aria',
+        giratina: 'giratina-altered',
+        shaymin: 'shaymin-land',
+        wormadam: 'wormadam-plant',
+        basculin: 'basculin-red-striped',
+        darmanitan: 'darmanitan-standard',
+        tornadus: 'tornadus-incarnate',
+        thundurus: 'thundurus-incarnate',
+        landorus: 'landorus-incarnate',
+        keldeo: 'keldeo-ordinary'
+      };
+
+      const fallbackSlug = FORM_MAP[baseSlug] || baseSlug;
+      res = await fetch(`https://pokeapi.co/api/v2/pokemon/${fallbackSlug}`);
     }
 
-    // 3. If specific form 404s, fall back to fetching the base species form
-    if (!pokemon) {
-      const resBase = await fetch(`https://pokeapi.co/api/v2/pokemon/${baseSlug}`);
-      if (!resBase.ok) throw new Error("Base species not found");
-      pokemon = await resBase.json();
-    }
+    if (!res.ok) throw new Error(`API fetch failed for ${apiKey}`);
+    pokemon = await res.json();
 
-    // 4. Fetch the species endpoint (always uses baseSlug)
-    const species = await fetch(`https://pokeapi.co/api/v2/pokemon-species/${baseSlug}`)
+    // 3. Fetch base species endpoint using the root species name
+    const speciesSlug = pokemon.species?.name || apiKey.split('-')[0];
+    const species = await fetch(`https://pokeapi.co/api/v2/pokemon-species/${speciesSlug}`)
       .then(r => r.ok ? r.json() : null);
 
-    // 5. Determine default gender
+    // 4. Set Gender
     let defaultGender = 'M';
-    if (isFemaleSelected) {
+    if (forceFemale) {
       defaultGender = 'F';
     } else if (species) {
       defaultGender = species.gender_rate === -1 ? 'N' : species.gender_rate === 8 ? 'F' : 'M';
@@ -599,7 +634,6 @@ async function selectPokemon(index, name) {
 
     const defaultAbility = pokemon.abilities[0]?.ability.name || "";
     
-    // 6. Set slot state
     teamState[index] = {
       ...createEmptySlot(),
       pokemon,
