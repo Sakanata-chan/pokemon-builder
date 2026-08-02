@@ -489,16 +489,40 @@ function renderPokedexGrid() {
     </div>`).join('');
 }
 
+let pendingPokemonSelection = null;
+
 function promptSlotSelection(name) {
-  const emptyIdx = teamState.findIndex(s => s.pokemon === null);
-  const choice = prompt(`Add ${name.toUpperCase()} to team:\nEnter Slot number (1-6):`, (emptyIdx !== -1 ? emptyIdx : 0) + 1);
-  if (choice) {
-    const slotNum = parseInt(choice);
-    if (slotNum >= 1 && slotNum <= 6) {
-      selectPokemon(slotNum - 1, name);
-      document.getElementById('dex-modal').style.display = 'none';
-    } else alert('Invalid slot number.');
+  pendingPokemonSelection = name;
+  document.getElementById('slot-modal-title').textContent = `Add ${fmtName(name).toUpperCase()} to Slot:`;
+  
+  const container = document.getElementById('slot-picker-container');
+  container.innerHTML = teamState.map((slot, idx) => {
+    const isOccupied = slot.pokemon !== null;
+    const pokeName = isOccupied ? fmtName(slot.pokemon.name) : 'Empty Slot';
+    const statusText = isOccupied ? `Lv. ${slot.level}` : 'Click to place here';
+    const thumbUrl = isOccupied ? getPokemonSprite(slot.pokemon, slot.shiny, slot.gender === 'F', false) : '';
+
+    return `
+      <div class="slot-picker-card ${!isOccupied ? 'is-empty' : ''}" onclick="confirmSlotSelection(${idx})">
+        <span class="slot-picker-num">#${idx + 1}</span>
+        ${isOccupied ? `<img src="${thumbUrl}" style="width:32px; height:32px; object-fit:contain; image-rendering:pixelated;">` : ''}
+        <div class="slot-picker-info">
+          <span class="slot-picker-name">${pokeName}</span>
+          <span class="slot-picker-status">${statusText}</span>
+        </div>
+      </div>`;
+  }).join('');
+
+  document.getElementById('slot-select-modal').style.display = 'flex';
+}
+
+function confirmSlotSelection(slotIndex) {
+  if (pendingPokemonSelection) {
+    selectPokemon(slotIndex, pendingPokemonSelection);
+    pendingPokemonSelection = null;
   }
+  document.getElementById('slot-select-modal').style.display = 'none';
+  document.getElementById('dex-modal').style.display = 'none';
 }
 
 // --- EXPORT SLOT AS IMAGE ---
