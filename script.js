@@ -87,8 +87,23 @@ const getGen = id => id <= 151 ? 1 : id <= 251 ? 2 : id <= 386 ? 3 : id <= 493 ?
 const fmtName = name => name.replace(/-/g, ' ');
 
 function refreshUI() {
+  // 1. Find which slot drawers are currently open
+  const openDrawerIndices = [];
+  document.querySelectorAll('.grid .card').forEach((card, idx) => {
+    if (card.classList.contains('drawer-open')) {
+      openDrawerIndices.push(idx);
+    }
+  });
+
+  // 2. Re-render HTML slots
   renderTeamSlots();
   renderAnalysis();
+
+  // 3. Restore the open drawer state
+  openDrawerIndices.forEach(idx => {
+    const card = document.querySelectorAll('.grid .card')[idx];
+    if (card) card.classList.add('drawer-open');
+  });
 }
 
 function playCry(url) {
@@ -362,7 +377,7 @@ function updateIvEv(slotIdx, type, statKey, val) {
     const otherTotal = Object.keys(teamState[slotIdx].evs).filter(k => k !== statKey).reduce((sum, k) => sum + teamState[slotIdx].evs[k], 0);
     teamState[slotIdx].evs[statKey] = otherTotal + parsed > 510 ? 510 - otherTotal : parsed;
   }
-  renderTeamSlots();
+  refreshUI(); // Changed from renderTeamSlots()
 }
 
 function applyBulkField(field, value) {
@@ -392,13 +407,13 @@ function applyBulkEvPreset(presetType) {
 async function handleAbilitySelect(slotIdx, abilityName) {
   teamState[slotIdx].ability = abilityName;
   await fetchAbilityDetails(abilityName);
-  renderTeamSlots();
+  refreshUI(); // Changed from renderTeamSlots()
 }
 
 async function handleMoveSelect(slotIdx, moveIdx, moveName) {
   teamState[slotIdx].moves[moveIdx] = moveName;
   await fetchMoveDetails(moveName);
-  renderTeamSlots();
+  refreshUI(); // Changed from renderTeamSlots()
 }
 
 async function selectPokemon(index, name) {
