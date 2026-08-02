@@ -1,20 +1,32 @@
 :root {
-  --bg-color: #0f111a; --card-bg: #1a1d2d; --card-border: #2a2e45;
-  --text-color: #f0f3f9; --text-muted: #8c95a8; --control-bg: #181b2a;
-  --control-border: #282c44; --select-bg: #22263d; --dash-bg: #161826;
-  --stats-bg: #141724; --tag-bg: #22263d; --primary-yellow: #ffcb05;
-  --accent-blue: #3c5aa6; --accent-purple: #9c27b0; --accent-red: #e91e63;
-  --accent-teal: #00897b; --accent-gold: #ffb300; --shadow-color: rgba(0, 0, 0, 0.4);
+  --bg-color: #0b0d14;
+  --card-bg: #141724;
+  --card-border: #222638;
+  --text-color: #e6ebf5;
+  --text-muted: #828ca0;
+  --control-bg: #181b2a;
+  --control-border: #282c42;
+  --select-bg: #1d2133;
+  --dash-bg: #11131f;
+  --stats-bg: #0f111c;
+  --primary-yellow: #ffcb05;
+  --accent-gold: #ffb300;
+  --shadow-color: rgba(0, 0, 0, 0.4);
 }
- 
-[data-theme="light"] {
-  --bg-color: #f0f2f7; --card-bg: #ffffff; --card-border: #e1e5ee;
-  --text-color: #1a1e29; --text-muted: #6b7588; --control-bg: #ffffff;
-  --control-border: #e1e5ee; --select-bg: #f4f6fb; --dash-bg: #ffffff;
-  --stats-bg: #f0f3f8; --tag-bg: #ebf0f7; --primary-yellow: #dca300;
-  --accent-purple: #7b1fa2; --accent-red: #c2185b; --accent-teal: #00695c;
-  --shadow-color: rgba(0, 0, 0, 0.06);
+
+/* Base Styles */
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; }
+body { background-color: var(--bg-color); color: var(--text-color); display: flex; flex-direction: column; align-items: center; min-height: 100vh; padding: 20px; }
+header { text-align: center; margin-bottom: 20px; width: 100%; max-width: 950px; }
+
+.top-bar { display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 10px; flex-wrap: wrap; gap: 8px; }
+.action-btn-sm {
+  background-color: var(--control-bg); color: var(--text-color); border: 1px solid var(--control-border);
+  padding: 7px 12px; border-radius: 8px; font-size: 0.8rem; cursor: pointer; display: flex; align-items: center; gap: 6px; font-weight: 600;
+  transition: border-color 0.15s, color 0.15s;
 }
+.action-btn-sm:hover { border-color: var(--primary-yellow); color: var(--primary-yellow); }
+h1 { color: var(--primary-yellow); font-size: 2.2rem; margin-bottom: 6px; }
 
 * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; transition: background-color 0.2s, color 0.2s, border-color 0.2s; }
 body { background-color: var(--bg-color); color: var(--text-color); display: flex; flex-direction: column; align-items: center; min-height: 100vh; padding: 20px; }
