@@ -259,7 +259,9 @@ function renderTeamSlots() {
     } else {
       const { pokemon, species, shiny: isShiny, gender, showBack } = slot;
       // Inside renderTeamSlots(), under the filled card condition:
-      const speciesName = fmtName(pokemon.name);
+      // Inside renderTeamSlots(), under the filled card condition:
+      const rawName = pokemon.name.replace(/-female$/i, '').replace(/-male$/i, '');
+      const speciesName = fmtName(rawName);
       const displayName = slot.nickname ? slot.nickname : speciesName;
       const isFemale = gender === 'F';
       const spriteUrl = getPokemonSprite(pokemon, isShiny, isFemale, showBack, slot.spriteStyle || 'gen5_anim');
@@ -469,8 +471,33 @@ function toggleDrawer(index) {
   document.querySelectorAll('.grid .card')[index]?.classList.toggle('drawer-open');
 }
 
-function updateSlot(index, field, value) {
-  teamState[index][field] = value;
+async function updateSlot(index, field, value) {
+  const slot = teamState[index];
+  slot[field] = value;
+
+  // Handle species with distinct gender forms (Frillish, Jellicent, Unfezant, Hippopotas, etc.)
+  if (field === 'gender' && slot.species && slot.species.varieties) {
+    const speciesBaseName = slot.species.name;
+    const isFemale = value === 'F';
+    
+    // Check if PokéAPI has a dedicated female variety endpoint (e.g., frillish-female)
+    const femaleVariety = slot.species.varieties.find(v => v.pokemon.name.endsWith('-female'))?.pokemon.name;
+
+    if (isFemale && femaleVariety) {
+      try {
+        const femalePokemon = await fetch(`https://pokeapi.co/api/v2/pokemon/${femaleVariety}`).then(r => r.json());
+        slot.pokemon = femalePokemon;
+      } catch (e) { console.error("Could not fetch female form:", e); }
+    } else if (!isFemale && slot.pokemon.name.endsWith('-female')) {
+      // Revert to default male/base form
+      const defaultVariety = slot.species.varieties.find(v => v.is_default)?.pokemon.name || speciesBaseName;
+      try {
+        const defaultPokemon = await fetch(`https://pokeapi.co/api/v2/pokemon/${defaultVariety}`).then(r => r.json());
+        slot.pokemon = defaultPokemon;
+      } catch (e) { console.error("Could not fetch default form:", e); }
+    }
+  }
+
   refreshUI();
 }
 
