@@ -4,33 +4,60 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Pokémon Team Builder (Gen 1 - 5)</title>
-  <link rel="stylesheet" href="styles.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
   <header>
-    <div class="top-bar">
-      <div style="display:flex; gap:8px; flex-wrap:wrap;">
-        <button class="action-btn-sm" id="pokedex-sheet-btn">📖 Pokédex Directory</button>
-        <button class="action-btn-sm" id="batch-edit-btn">⚡ Edit All Pokémon</button>
-        <button class="action-btn-sm" id="export-btn">📋 Showdown Export</button>
-        <button class="action-btn-sm" id="save-team-btn" title="Save team to browser memory">💾 Save Team</button>
-        <button class="action-btn-sm" id="load-team-btn" title="Load saved team from browser">📂 Load Team</button>
+    <h1>Pokémon Team Builder</h1>
+    <p>Build your Gen 1–5 team and analyze defensive coverage!</p>
+  </header>
+
+  <!-- Dashboard Overview -->
+  <div class="dashboard">
+    <div class="dash-item">
+      <span class="dash-label">Active Team Members</span>
+      <span class="dash-value" id="team-counter">0 / 6</span>
+    </div>
+    <div class="dash-item">
+      <span class="dash-label">Shinies on Team</span>
+      <span class="dash-value" id="shiny-counter" style="color: #ff007f;">0</span>
+    </div>
+    <div class="dash-item">
+      <span class="dash-label">Average Team Level</span>
+      <span class="dash-value" id="avg-level-counter">--</span>
+    </div>
+  </div>
+
+  <!-- Reorganized Top Bar Control Panel (Placed Below Dashboard) -->
+  <div class="control-panel">
+    <div class="panel-group">
+      <span class="group-label">Tools</span>
+      <div class="group-buttons">
+        <button class="action-btn-sm" id="pokedex-sheet-btn">📖 Directory</button>
+        <button class="action-btn-sm" id="batch-edit-btn">⚡ Batch Edit</button>
+      </div>
+    </div>
+
+    <div class="panel-group">
+      <span class="group-label">Data & Storage</span>
+      <div class="group-buttons">
+        <button class="action-btn-sm" id="save-team-btn" title="Save team to browser memory">💾 Save</button>
+        <button class="action-btn-sm" id="load-team-btn" title="Load saved team from browser">📂 Load</button>
         <button class="action-btn-sm" id="export-json-btn" title="Export team as JSON file">📥 Export JSON</button>
         <button class="action-btn-sm" id="import-json-btn" title="Import team from JSON file">📤 Import JSON</button>
         <input type="file" id="json-file-input" accept=".json" style="display: none;">
-        <button class="action-btn-sm" id="clear-btn">🗑️ Clear Team</button>
       </div>
     </div>
-    <h1>Pokémon Team Builder</h1>
-    <p>Build your Gen 1-5 team and analyze defensive coverage!</p>
-  </header>
 
-  <div class="dashboard">
-    <div class="dash-item"><span class="dash-label">Active Team Members</span><span class="dash-value" id="team-counter">0 / 6</span></div>
-    <div class="dash-item"><span class="dash-label">Shinies on Team</span><span class="dash-value" id="shiny-counter" style="color: #ff007f;">0</span></div>
-    <div class="dash-item"><span class="dash-label">Average Team Level</span><span class="dash-value" id="avg-level-counter">--</span></div>
+    <div class="panel-group">
+      <span class="group-label">Export & Reset</span>
+      <div class="group-buttons">
+        <button class="action-btn-sm" id="export-btn">📋 Showdown</button>
+        <button class="action-btn-sm btn-danger" id="clear-btn">🗑️ Clear Team</button>
+      </div>
+    </div>
   </div>
 
   <!-- 6 Pokémon Slot Grid -->
