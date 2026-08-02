@@ -659,6 +659,10 @@ document.getElementById('export-btn').addEventListener('click', () => {
   document.getElementById('export-modal').style.display = 'flex';
 });
 
+document.getElementById('close-slot-modal-btn').addEventListener('click', () => {
+  document.getElementById('slot-select-modal').style.display = 'none';
+});
+
 document.getElementById('close-modal-btn').addEventListener('click', () => document.getElementById('export-modal').style.display = 'none');
 document.getElementById('clear-btn').addEventListener('click', () => { teamState = Array.from({ length: 6 }, createEmptySlot); refreshUI(); });
 
