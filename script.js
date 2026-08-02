@@ -283,11 +283,15 @@ function renderTeamSlots() {
             <span class="card-name" title="Species: ${speciesName}">
               ${displayName} ${slot.nickname ? `<span style="font-size:0.7rem; color:var(--text-muted); font-weight:normal;">(${speciesName})</span>` : ''}
             </span>            
-            <span class="header-gen-badge">Gen ${getGen(species.id)}</span>
             <span class="level-badge">Lv.${slot.level}</span>
             ${genderBadge}
           </div>
-          <div class="types">${pokemon.types.map(t => `<span class="type-badge ${t.type.name}">${t.type.name}</span>`).join('')}</div>
+          
+          <div class="types">
+            <span class="header-gen-badge">Gen ${getGen(species.id)}</span>
+            ${pokemon.types.map(t => `<span class="type-badge ${t.type.name}">${t.type.name}</span>`).join('')}
+          </div>
+          
           <div class="sprite-container"><img src="${spriteUrl}" alt="${pokemon.name}"></div>
 
           <div class="meta-badges-container">
