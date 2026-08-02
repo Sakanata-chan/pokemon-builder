@@ -562,29 +562,46 @@ async function handleMoveSelect(slotIdx, moveIdx, moveName) {
 
 async function selectPokemon(index, name) {
   try {
-    // 1. Fetch species data first to get the default variety name
-    const species = await fetch(`https://pokeapi.co/api/v2/pokemon-species/${name}`).then(r => r.json());
+    // 1. Sanitize the incoming API key (convert spaces back to hyphens)
+    const apiKey = name.toLowerCase().trim().replace(/ /g, '-');
 
-    // 2. Determine default pokemon endpoint name (handles Meloetta, Giratina, Deoxys, etc.)
-    const defaultVariety = species.varieties.find(v => v.is_default)?.pokemon.name || name;
+    // 2. Extract base species slug (e.g. "meloetta-pirouette" -> "meloetta")
+    const baseSpeciesSlug = apiKey.split('-')[0];
 
-    // 3. Fetch detailed Pokémon data using the resolved variety name
-    const pokemon = await fetch(`https://pokeapi.co/api/v2/pokemon/${defaultVariety}`).then(r => r.json());
+    // 3. Fetch Pokémon details and Species details in parallel with fallback
+    let pokemon, species;
 
+    try {
+      [pokemon, species] = await Promise.all([
+        fetch(`https://pokeapi.co/api/v2/pokemon/${apiKey}`).then(r => {
+          if (!r.ok) throw new Error("Pokemon API error");
+          return r.json();
+        }),
+        fetch(`https://pokeapi.co/api/v2/pokemon-species/${apiKey}`).then(r => r.ok ? r.json() : null)
+      ]);
+    } catch (e) {
+      // If fetching species with full variant name failed, fetch base species slug instead
+      pokemon = await fetch(`https://pokeapi.co/api/v2/pokemon/${apiKey}`).then(r => r.json());
+      species = await fetch(`https://pokeapi.co/api/v2/pokemon-species/${baseSpeciesSlug}`).then(r => r.json());
+    }
+
+    // 4. Default abilities & initial slot state
     const defaultAbility = pokemon.abilities[0]?.ability.name || "";
+    
     teamState[index] = {
       ...createEmptySlot(),
-      pokemon, 
-      species,
-      gender: species.gender_rate === -1 ? 'N' : species.gender_rate === 8 ? 'F' : 'M',
-      friendship: species.base_happiness ?? 70,
+      pokemon,
+      species: species || { id: pokemon.id, gender_rate: -1, base_happiness: 70 },
+      gender: species?.gender_rate === -1 ? 'N' : species?.gender_rate === 8 ? 'F' : 'M',
+      friendship: species?.base_happiness ?? 70,
       ability: defaultAbility
     };
 
     if (defaultAbility) await fetchAbilityDetails(defaultAbility);
     refreshUI();
-  } catch (e) { 
-    console.error("Setting Pokémon failed:", e); 
+
+  } catch (e) {
+    console.error("Setting Pokémon failed:", e);
     alert(`Could not load details for ${fmtName(name)}.`);
   }
 }
