@@ -831,13 +831,15 @@ async function init() {
   if (batchNatureSelect) batchNatureSelect.innerHTML = NATURES.map(n => `<option value="${n}">${n}</option>`).join('');
 
   try {
-    // 1. Fetch Gen 1-5 species
+    // 1. Fetch Gen 1-5 species (649 base species)
     const data = await fetch('https://pokeapi.co/api/v2/pokemon-species?limit=649').then(r => r.json());
     
-    // Keywords to exclude post-Gen 5 mechanics
-    const EXCLUDED_FORM_KEYWORDS = ['mega', 'gmax', 'alola', 'galar', 'hisui', 'paldea', 'totem', 'starter'];
+    // 2. Blacklisted keywords to exclude mechanics beyond Gen 5
+    const BANNED_KEYWORDS = [
+      '-mega', '-gmax', '-totem', '-alola', '-galar', '-hisui', '-paldea',
+      '-starter', '-cap', '-pikachu-'
+    ];
 
-    // 2. Fetch full details for species with varieties/forms
     const speciesPromises = data.results.map(async (item, idx) => {
       const id = idx + 1;
       const gen = getGen(id);
@@ -845,12 +847,11 @@ async function init() {
       try {
         const speciesData = await fetch(item.url).then(r => r.json());
         
-        // If the Pokémon has multiple forms/varieties
         if (speciesData.varieties && speciesData.varieties.length > 1) {
+          // Filter out Mega, GMax, Totem, and Regional forms
           const validVarieties = speciesData.varieties.filter(v => {
             const vName = v.pokemon.name.toLowerCase();
-            // Filter out any form containing excluded post-Gen 5 keywords
-            return !EXCLUDED_FORM_KEYWORDS.some(kw => vName.includes(kw));
+            return !BANNED_KEYWORDS.some(banned => vName.includes(banned));
           });
 
           if (validVarieties.length > 0) {
@@ -865,7 +866,7 @@ async function init() {
             });
           }
         }
-      } catch (e) { /* fallback to default */ }
+      } catch (e) { /* fallback */ }
 
       return [{ id, name: item.name, displayName: fmtName(item.name), gen }];
     });
