@@ -190,9 +190,12 @@ function renderTeamSlots() {
 
       slotWrapper.innerHTML = `
         <div class="slot-top-bar">
-          <div>${isLead ? `<span class="leader-badge">👑</span>` : `<span class="card-id">#${String(species.id).padStart(4, '0')}</span>`}</div>
+          <div style="display:flex; align-items:center; gap:4px;">
+            ${index > 0 ? `<button class="bar-btn-tag" onclick="moveSlot(${index}, -1)" title="Move Left">◄</button>` : ''}
+            ${index < 5 ? `<button class="bar-btn-tag" onclick="moveSlot(${index}, 1)" title="Move Right">►</button>` : ''}
+            ${isLead ? `<span class="leader-badge">👑</span>` : `<span class="card-id">#${String(species.id).padStart(4, '0')}</span>`}
+          </div>
           <div style="display:flex; gap:4px; align-items:center;">
-            <button class="bar-btn-tag" onclick="swapSlots(${index})" title="Move or Swap Slot">⇄ Move</button>
             <button class="bar-btn-tag flip-btn-tag ${showBack ? 'active' : ''}" onclick="updateSlot(${index}, 'showBack', ${!showBack})">🔄 ${showBack ? 'Back' : 'Front'}</button>
             <button class="bar-btn-tag shiny-btn-tag ${isShiny ? 'active' : ''}" onclick="updateSlot(${index}, 'shiny', ${!isShiny})">✨ Shiny</button>
             <button class="bar-btn-tag" onclick="toggleDrawer(${index})">⚙️ Edit</button>
@@ -338,17 +341,9 @@ function updateSlot(index, field, value) {
   refreshUI();
 }
 
-function swapSlots(fromIndex) {
-  const targetSlot = prompt(`Move ${teamState[fromIndex].pokemon ? fmtName(teamState[fromIndex].pokemon.name).toUpperCase() : `Slot #${fromIndex + 1}`} to which slot? (1-6):`, fromIndex === 0 ? 2 : 1);
-  if (!targetSlot) return;
-  
-  const toIndex = parseInt(targetSlot) - 1;
-  if (isNaN(toIndex) || toIndex < 0 || toIndex > 5) {
-    alert("Invalid slot number! Please choose a number between 1 and 6.");
-    return;
-  }
-
-  if (fromIndex === toIndex) return;
+function moveSlot(fromIndex, direction) {
+  const toIndex = fromIndex + direction;
+  if (toIndex < 0 || toIndex >= teamState.length) return;
 
   const temp = teamState[fromIndex];
   teamState[fromIndex] = teamState[toIndex];
