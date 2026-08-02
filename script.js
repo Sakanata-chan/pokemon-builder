@@ -129,20 +129,40 @@ const SPRITE_VERSIONS = {
 function getPokemonSprite(pokemon, isShiny, isFemale, showBack, versionKey = 'gen5_anim') {
   const dir = showBack ? 'back' : 'front';
   const shiny = isShiny ? '_shiny' : '_default';
-  const female = isFemale ? '_female' : '';
-
+  
   const sprites = pokemon.sprites;
   const versions = sprites?.versions;
 
+  // Helper function to resolve sprite URL with gender fallback
+  const resolveGenderSprite = (spriteObj) => {
+    if (!spriteObj) return null;
+
+    if (isFemale) {
+      // 1. Try direct female path for the requested direction & shiny mode
+      const femaleKey = `${dir}${shiny}_female`;
+      if (spriteObj[femaleKey]) return spriteObj[femaleKey];
+
+      // 2. Try non-shiny female path if shiny female is missing
+      if (isShiny && spriteObj[`${dir}_female`]) return spriteObj[`${dir}_female`];
+
+      // 3. Fallback to base sprites object front_female / back_female
+      const baseFemaleKey = isShiny ? `${dir}_shiny_female` : `${dir}_female`;
+      if (sprites[baseFemaleKey]) return sprites[baseFemaleKey];
+    }
+
+    // Default male/standard sprite resolution
+    return spriteObj[`${dir}${shiny}`] || spriteObj[`${dir}_default`] || spriteObj.front_default;
+  };
+
   // 1. Showdown 3D Animated
   if (versionKey === 'showdown') {
-    const sd = sprites?.other?.showdown;
-    return sd?.[`${dir}${shiny}${female}`] || sd?.[`${dir}${shiny}`] || sprites?.other?.['official-artwork']?.front_default;
+    return resolveGenderSprite(sprites?.other?.showdown) || sprites?.other?.['official-artwork']?.front_default;
   }
 
   // 2. Pokémon HOME 3D
   if (versionKey === 'home') {
     const home = sprites?.other?.home;
+    if (isFemale && home?.front_female) return home.front_female;
     return isShiny ? (home?.front_shiny || home?.front_default) : home?.front_default;
   }
 
@@ -159,25 +179,22 @@ function getPokemonSprite(pokemon, isShiny, isFemale, showBack, versionKey = 'ge
 
   // 5. Gen 2 (Crystal)
   if (versionKey === 'gen2') {
-    return versions?.['generation-ii']?.['crystal']?.[`${dir}${shiny}`] || sprites?.front_default;
+    return resolveGenderSprite(versions?.['generation-ii']?.['crystal']) || sprites?.front_default;
   }
 
   // 6. Gen 3 (Emerald)
   if (versionKey === 'gen3') {
-    return versions?.['generation-iii']?.['emerald']?.[`${dir}_default`] || sprites?.front_default;
+    return resolveGenderSprite(versions?.['generation-iii']?.['emerald']) || sprites?.front_default;
   }
 
   // 7. Gen 4 (Platinum)
   if (versionKey === 'gen4') {
-    const g4 = versions?.['generation-iv']?.['platinum'];
-    return g4?.[`${dir}${shiny}${female}`] || g4?.[`${dir}${shiny}`] || sprites?.front_default;
+    return resolveGenderSprite(versions?.['generation-iv']?.['platinum']) || sprites?.front_default;
   }
 
   // Default: Gen 5 Animated (BW)
   const g5 = versions?.['generation-v']?.['black-white']?.animated;
-  return g5?.[`${dir}${shiny}${female}`] || g5?.[`${dir}${shiny}`] 
-      || sprites?.[`${dir}${shiny}${female}`] || sprites?.[`${dir}${shiny}`] 
-      || sprites?.other?.['official-artwork']?.front_default;
+  return resolveGenderSprite(g5) || resolveGenderSprite(sprites) || sprites?.other?.['official-artwork']?.front_default;
 }
 
 function calculateStat(base, iv, ev, level, statKey, nature) {
