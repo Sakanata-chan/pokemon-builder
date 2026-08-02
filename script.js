@@ -562,37 +562,41 @@ async function handleMoveSelect(slotIdx, moveIdx, moveName) {
 
 async function selectPokemon(index, name) {
   try {
-    // 1. Sanitize the incoming API key (convert spaces back to hyphens)
+    // 1. Sanitize incoming name (e.g., "frillish-female" or "frillish")
     const apiKey = name.toLowerCase().trim().replace(/ /g, '-');
 
-    // 2. Extract base species slug (e.g. "meloetta-pirouette" -> "meloetta")
-    const baseSpeciesSlug = apiKey.split('-')[0];
+    // 2. Fetch Pokémon form data first
+    const pokemon = await fetch(`https://pokeapi.co/api/v2/pokemon/${apiKey}`)
+      .then(r => {
+        if (!r.ok) throw new Error("Pokemon API error");
+        return r.json();
+      });
 
-    // 3. Fetch Pokémon details and Species details in parallel with fallback
-    let pokemon, species;
+    // 3. Always extract the true base species name from the pokemon object (e.g. pokemon.species.name)
+    const speciesSlug = pokemon.species?.name || apiKey.split('-')[0];
+    
+    // 4. Fetch the species data using the correct base species slug
+    const species = await fetch(`https://pokeapi.co/api/v2/pokemon-species/${speciesSlug}`)
+      .then(r => r.ok ? r.json() : null);
 
-    try {
-      [pokemon, species] = await Promise.all([
-        fetch(`https://pokeapi.co/api/v2/pokemon/${apiKey}`).then(r => {
-          if (!r.ok) throw new Error("Pokemon API error");
-          return r.json();
-        }),
-        fetch(`https://pokeapi.co/api/v2/pokemon-species/${apiKey}`).then(r => r.ok ? r.json() : null)
-      ]);
-    } catch (e) {
-      // If fetching species with full variant name failed, fetch base species slug instead
-      pokemon = await fetch(`https://pokeapi.co/api/v2/pokemon/${apiKey}`).then(r => r.json());
-      species = await fetch(`https://pokeapi.co/api/v2/pokemon-species/${baseSpeciesSlug}`).then(r => r.json());
+    // 5. Determine correct default gender based on the form name or species rate
+    let defaultGender = 'M';
+    if (apiKey.endsWith('-female')) {
+      defaultGender = 'F';
+    } else if (apiKey.endsWith('-male')) {
+      defaultGender = 'M';
+    } else if (species) {
+      defaultGender = species.gender_rate === -1 ? 'N' : species.gender_rate === 8 ? 'F' : 'M';
     }
 
-    // 4. Default abilities & initial slot state
     const defaultAbility = pokemon.abilities[0]?.ability.name || "";
     
+    // 6. Set slot state
     teamState[index] = {
       ...createEmptySlot(),
       pokemon,
       species: species || { id: pokemon.id, gender_rate: -1, base_happiness: 70 },
-      gender: species?.gender_rate === -1 ? 'N' : species?.gender_rate === 8 ? 'F' : 'M',
+      gender: defaultGender,
       friendship: species?.base_happiness ?? 70,
       ability: defaultAbility
     };
@@ -604,11 +608,6 @@ async function selectPokemon(index, name) {
     console.error("Setting Pokémon failed:", e);
     alert(`Could not load details for ${fmtName(name)}.`);
   }
-}
-
-function removePokemon(index) {
-  teamState[index] = createEmptySlot();
-  refreshUI();
 }
 
 function updateDashboard() {
@@ -859,9 +858,14 @@ async function init() {
               const varName = v.pokemon.name;
               let label = fmtName(varName);
               
-              if (varName.endsWith('-female')) label = `${fmtName(speciesData.name)} (Female)`;
-              else if (varName.endsWith('-male')) label = `${fmtName(speciesData.name)} (Male)`;
-
+          // ✅ Inside init()
+          if (varName.endsWith('-female')) {
+            label = `${fmtName(speciesData.name)} (Female)`;
+          } else if (varName.endsWith('-male')) {
+            label = `${fmtName(speciesData.name)} (Male)`;
+          } else if (validVarieties.length > 1 && varName !== speciesData.name) {
+            label = `${fmtName(speciesData.name)} (${fmtName(varName.replace(speciesData.name + '-', ''))})`;
+          }
               return { id, name: varName, displayName: label, gen };
             });
           }
