@@ -528,21 +528,33 @@ async function exportSlotAsImage(index) {
 }
 
 // --- LOCALSTORAGE & JSON EXPORT/IMPORT ---
+
 function saveTeamToLocalStorage() {
+  const existingSave = localStorage.getItem('pokemon_team_builder_save');
+
+  // If a save already exists, ask for confirmation before overwriting
+  if (existingSave) {
+    const confirmOverwrite = confirm("A saved team already exists in browser storage. Do you want to overwrite it?");
+    if (!confirmOverwrite) return;
+  }
+
   localStorage.setItem('pokemon_team_builder_save', JSON.stringify(teamState));
-  alert('Team saved to browser storage!');
+  // Removed success alert
 }
 
 function loadTeamFromLocalStorage() {
   const saved = localStorage.getItem('pokemon_team_builder_save');
+  
+  // Kept alert for when no saved team exists
   if (!saved) {
     alert('No saved team found in browser storage.');
     return;
   }
+  
   try {
     teamState = JSON.parse(saved);
     refreshUI();
-    alert('Team loaded successfully!');
+    // Removed success alert
   } catch (e) {
     alert('Failed to load saved team.');
   }
