@@ -230,10 +230,10 @@ function renderTeamSlots() {
           <div class="sprite-container"><img src="${spriteUrl}" alt="${pokemon.name}"></div>
 
           <div class="meta-badges-container">
-            <div class="pill-badge pill-nature" title="${natureDesc}">⚡ ${slot.nature}</div>
+            <div class="pill-badge pill-nature" title="${natureDesc}">${slot.nature}</div>
             <div class="pill-badge pill-friend" title="${friendInfo.desc}">♥ ${slot.friendship}/255</div>
             ${slot.item ? `<div class="pill-badge pill-item" title="${ITEM_DESCRIPTIONS[slot.item] || ''}">🎒 ${slot.item}</div>` : ''}
-            ${slot.ability ? `<div class="pill-badge pill-ability" title="${activeAbility?.desc || 'Loading...'}">🌀 ${fmtName(slot.ability)}</div>` : ''}
+            ${slot.ability ? `<div class="pill-badge pill-ability" title="${activeAbility?.desc || 'Loading...'}">${fmtName(slot.ability)}</div>` : ''}
           </div>
 
 <div class="moveset-card">
