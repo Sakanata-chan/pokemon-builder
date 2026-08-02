@@ -505,15 +505,20 @@ async function handleMoveSelect(slotIdx, moveIdx, moveName) {
 
 async function selectPokemon(index, name) {
   try {
-    const [pokemon, species] = await Promise.all([
-      fetch(`https://pokeapi.co/api/v2/pokemon/${name}`).then(r => r.json()),
-      fetch(`https://pokeapi.co/api/v2/pokemon-species/${name}`).then(r => r.json())
-    ]);
+    // 1. Fetch species data first to get the default variety name
+    const species = await fetch(`https://pokeapi.co/api/v2/pokemon-species/${name}`).then(r => r.json());
+
+    // 2. Determine default pokemon endpoint name (handles Meloetta, Giratina, Deoxys, etc.)
+    const defaultVariety = species.varieties.find(v => v.is_default)?.pokemon.name || name;
+
+    // 3. Fetch detailed Pokémon data using the resolved variety name
+    const pokemon = await fetch(`https://pokeapi.co/api/v2/pokemon/${defaultVariety}`).then(r => r.json());
 
     const defaultAbility = pokemon.abilities[0]?.ability.name || "";
     teamState[index] = {
       ...createEmptySlot(),
-      pokemon, species,
+      pokemon, 
+      species,
       gender: species.gender_rate === -1 ? 'N' : species.gender_rate === 8 ? 'F' : 'M',
       friendship: species.base_happiness ?? 70,
       ability: defaultAbility
@@ -521,7 +526,10 @@ async function selectPokemon(index, name) {
 
     if (defaultAbility) await fetchAbilityDetails(defaultAbility);
     refreshUI();
-  } catch (e) { console.error("Setting Pokémon failed", e); }
+  } catch (e) { 
+    console.error("Setting Pokémon failed:", e); 
+    alert(`Could not load details for ${fmtName(name)}.`);
+  }
 }
 
 function removePokemon(index) {
