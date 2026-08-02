@@ -493,6 +493,10 @@ let pendingPokemonSelection = null;
 
 function promptSlotSelection(name) {
   pendingPokemonSelection = name;
+  
+  // Hide the Pokédex directory temporarily while selecting slot
+  document.getElementById('dex-modal').style.display = 'none';
+  
   document.getElementById('slot-modal-title').textContent = `Add ${fmtName(name).toUpperCase()} to Slot:`;
   
   const container = document.getElementById('slot-picker-container');
