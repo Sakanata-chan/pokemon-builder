@@ -161,7 +161,7 @@ function renderTeamSlots() {
     if (!slot.pokemon) {
       slotWrapper.innerHTML = `
         <div class="card empty-slot ${isLead ? 'lead-slot' : ''}">
-          ${isLead ? `<div class="leader-badge" style="position:absolute; top:12px; left:12px;">👑</div>` : ''}
+          ${isLead ? `<div class="leader-badge" style="position:absolute; top:12px; left:12px;">👑 Leader</div>` : ''}
           <div class="card-id">Slot #${index + 1}</div>
           <div class="search-box">
             <input type="text" class="search-input" placeholder="${isLead ? '+ Choose Lead Pokémon...' : '+ Choose Pokémon...'}" data-index="${index}">
@@ -196,10 +196,11 @@ function renderTeamSlots() {
             ${isLead ? `<span class="leader-badge">👑</span>` : `<span class="card-id">#${String(species.id).padStart(4, '0')}</span>`}
           </div>
           <div style="display:flex; gap:4px; align-items:center;">
-            <button class="bar-btn-tag flip-btn-tag ${showBack ? 'active' : ''}" onclick="updateSlot(${index}, 'showBack', ${!showBack})">🔄</button>
-            <button class="bar-btn-tag shiny-btn-tag ${isShiny ? 'active' : ''}" onclick="updateSlot(${index}, 'shiny', ${!isShiny})">✨</button>
-            <button class="bar-btn-tag" onclick="toggleDrawer(${index})">⚙️</button>
-            <button class="btn-danger-sm" onclick="removePokemon(${index})">🗑️</button>
+            <button class="bar-btn-tag flip-btn-tag ${showBack ? 'active' : ''}" onclick="updateSlot(${index}, 'showBack', ${!showBack})" title="Toggle Front/Back Sprite">🔄</button>
+            <button class="bar-btn-tag shiny-btn-tag ${isShiny ? 'active' : ''}" onclick="updateSlot(${index}, 'shiny', ${!isShiny})" title="Toggle Shiny Sprite">✨</button>
+            <button class="bar-btn-tag" onclick="toggleDrawer(${index})" title="Edit Pokémon Stats/Moves">⚙️</button>
+            <button class="bar-btn-tag" onclick="exportSlotAsImage(${index})" title="Export Pokémon as Image">📸</button>
+            <button class="btn-danger-sm" onclick="removePokemon(${index})" title="Remove Pokémon">🗑️</button>
           </div>
         </div>
 
@@ -500,6 +501,85 @@ function promptSlotSelection(name) {
   }
 }
 
+// --- EXPORT SLOT AS IMAGE ---
+async function exportSlotAsImage(index) {
+  const slotNode = document.querySelectorAll('.grid .slot-wrapper')[index];
+  if (!slotNode || !teamState[index].pokemon) return;
+
+  const pokemonName = teamState[index].pokemon.name;
+
+  try {
+    const cardElement = slotNode.querySelector('.card');
+    const canvas = await html2canvas(cardElement, {
+      backgroundColor: null,
+      scale: 2,
+      useCORS: true
+    });
+
+    const image = canvas.toDataURL("image/png");
+    const link = document.createElement("a");
+    link.href = image;
+    link.download = `${pokemonName}-card.png`;
+    link.click();
+  } catch (err) {
+    console.error("Failed to render card image:", err);
+    alert("Could not export image.");
+  }
+}
+
+// --- LOCALSTORAGE & JSON EXPORT/IMPORT ---
+function saveTeamToLocalStorage() {
+  localStorage.setItem('pokemon_team_builder_save', JSON.stringify(teamState));
+  alert('Team saved to browser storage!');
+}
+
+function loadTeamFromLocalStorage() {
+  const saved = localStorage.getItem('pokemon_team_builder_save');
+  if (!saved) {
+    alert('No saved team found in browser storage.');
+    return;
+  }
+  try {
+    teamState = JSON.parse(saved);
+    refreshUI();
+    alert('Team loaded successfully!');
+  } catch (e) {
+    alert('Failed to load saved team.');
+  }
+}
+
+function exportTeamJSON() {
+  const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(teamState, null, 2));
+  const dlAnchor = document.createElement('a');
+  dlAnchor.setAttribute("href", dataStr);
+  dlAnchor.setAttribute("download", "pokemon_team.json");
+  document.body.appendChild(dlAnchor);
+  dlAnchor.click();
+  dlAnchor.remove();
+}
+
+function importTeamJSON(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const importedState = JSON.parse(e.target.result);
+      if (Array.isArray(importedState) && importedState.length === 6) {
+        teamState = importedState;
+        refreshUI();
+        alert('Team imported successfully!');
+      } else {
+        alert('Invalid JSON structure. Must be a 6-slot team configuration.');
+      }
+    } catch (err) {
+      alert('Error parsing JSON file.');
+    }
+  };
+  reader.readAsText(file);
+}
+
 // --- INIT & GLOBAL EVENT LISTENERS ---
 async function init() {
   const batchNatureSelect = document.getElementById('batch-nature');
@@ -545,6 +625,14 @@ document.getElementById('export-btn').addEventListener('click', () => {
 
 document.getElementById('close-modal-btn').addEventListener('click', () => document.getElementById('export-modal').style.display = 'none');
 document.getElementById('clear-btn').addEventListener('click', () => { teamState = Array.from({ length: 6 }, createEmptySlot); refreshUI(); });
+
+document.getElementById('save-team-btn').addEventListener('click', saveTeamToLocalStorage);
+document.getElementById('load-team-btn').addEventListener('click', loadTeamFromLocalStorage);
+document.getElementById('export-json-btn').addEventListener('click', exportTeamJSON);
+
+const jsonInput = document.getElementById('json-file-input');
+document.getElementById('import-json-btn').addEventListener('click', () => jsonInput.click());
+jsonInput.addEventListener('change', importTeamJSON);
 
 document.getElementById('theme-btn').addEventListener('click', () => {
   const isLight = document.documentElement.getAttribute('data-theme') === 'light';
