@@ -6,7 +6,7 @@
   --accent-blue: #3c5aa6; --accent-purple: #9c27b0; --accent-red: #e91e63;
   --accent-teal: #00897b; --accent-gold: #ffb300; --shadow-color: rgba(0, 0, 0, 0.4);
 }
-
+ 
 [data-theme="light"] {
   --bg-color: #f0f2f7; --card-bg: #ffffff; --card-border: #e1e5ee;
   --text-color: #1a1e29; --text-muted: #6b7588; --control-bg: #ffffff;
