@@ -224,3 +224,64 @@ textarea { width: 100%; height: 200px; background: var(--select-bg); color: var(
   85%  { transform: scale(2.2, 1.7)   translateY(0); }
   100% { transform: scale(2, 2)       translateY(0); }
 }
+
+/* Slot Selection Modal Grid */
+.slot-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.slot-picker-card {
+  background: var(--dash-bg);
+  border: 1px solid var(--control-border);
+  border-radius: 8px;
+  padding: 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.slot-picker-card:hover {
+  border-color: var(--primary-yellow);
+  background: var(--select-bg);
+  transform: translateY(-2px);
+}
+
+.slot-picker-card.is-empty {
+  border-style: dashed;
+}
+
+.slot-picker-num {
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: var(--primary-yellow);
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 4px;
+  padding: 2px 6px;
+}
+
+.slot-picker-info {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+  overflow: hidden;
+}
+
+.slot-picker-name {
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: capitalize;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.slot-picker-status {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+}
