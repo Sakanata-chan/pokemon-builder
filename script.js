@@ -103,7 +103,7 @@ function refreshUI() {
   // 3. Restore the open drawer state
   openDrawerIndices.forEach(idx => {
     const card = document.querySelectorAll('.grid .card')[idx];
-    if (card) card.classList.add(f'drawer-open');
+    if (card) card.classList.add('drawer-open');
   });
 }
 
