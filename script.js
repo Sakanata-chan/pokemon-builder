@@ -240,24 +240,30 @@ function renderTeamSlots() {
   ${slot.moves.map(mName => {
     const move = moveCache[mName];
     if (!move || !mName) {
-      return `<div class="move-slot empty" title="Empty Move Slot"><span>—</span></div>`;
+      return `
+        <div class="move-slot empty" title="Empty Move Slot">
+          <span class="move-empty-txt">— Empty Move —</span>
+        </div>`;
     }
 
-    const classIcon = move.damageClass === 'physical' ? '💥' : move.damageClass === 'special' ? '🔮' : '🛡️';
+    const categoryIcon = move.damageClass === 'physical' ? '💥' : move.damageClass === 'special' ? '🔮' : '🛡️';
     const moveTooltip = `${fmtName(move.name).toUpperCase()} (${move.type.toUpperCase()})\n• Class: ${move.damageClass.toUpperCase()}\n• Power: ${move.power} | Acc: ${move.accuracy} | PP: ${move.pp}\n• Effect: ${move.desc}`;
 
     return `
-      <div class="move-slot ${move.type}" title="${moveTooltip}">
-        <div class="move-header-line">
-          <span class="move-name">${classIcon} ${fmtName(move.name)}</span>
+      <div class="move-slot" title="${moveTooltip}">
+        <div class="move-type-pill ${move.type}">
+          <span class="move-cat-icon">${categoryIcon}</span>
+          <span class="move-type-lbl">${move.type.slice(0, 3)}</span>
         </div>
-        <div class="move-stats-line">
-          <span>PWR: ${move.power}</span>
-          <span>ACC: ${move.accuracy}</span>
-          <span>PP: ${move.pp}</span>
+        <div class="move-main-info">
+          <span class="move-title">${fmtName(move.name)}</span>
+          <div class="move-pills-row">
+            <span>Pwr <b>${move.power}</b></span>
+            <span>Acc <b>${move.accuracy}</b></span>
+            <span>PP <b>${move.pp}</b></span>
+          </div>
         </div>
-      </div>
-    `;
+      </div>`;
   }).join('')}
 </div>
 
