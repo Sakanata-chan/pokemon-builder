@@ -161,7 +161,7 @@ function renderTeamSlots() {
     if (!slot.pokemon) {
       slotWrapper.innerHTML = `
         <div class="card empty-slot ${isLead ? 'lead-slot' : ''}">
-          ${isLead ? `<div class="leader-badge" style="position:absolute; top:12px; left:12px;">👑 Leader</div>` : ''}
+          ${isLead ? `<div class="leader-badge" style="position:absolute; top:12px; left:12px;">👑</div>` : ''}
           <div class="card-id">Slot #${index + 1}</div>
           <div class="search-box">
             <input type="text" class="search-input" placeholder="${isLead ? '+ Choose Lead Pokémon...' : '+ Choose Pokémon...'}" data-index="${index}">
@@ -196,9 +196,9 @@ function renderTeamSlots() {
             ${isLead ? `<span class="leader-badge">👑</span>` : `<span class="card-id">#${String(species.id).padStart(4, '0')}</span>`}
           </div>
           <div style="display:flex; gap:4px; align-items:center;">
-            <button class="bar-btn-tag flip-btn-tag ${showBack ? 'active' : ''}" onclick="updateSlot(${index}, 'showBack', ${!showBack})">🔄 ${showBack ? 'Back' : 'Front'}</button>
-            <button class="bar-btn-tag shiny-btn-tag ${isShiny ? 'active' : ''}" onclick="updateSlot(${index}, 'shiny', ${!isShiny})">✨ Shiny</button>
-            <button class="bar-btn-tag" onclick="toggleDrawer(${index})">⚙️ Edit</button>
+            <button class="bar-btn-tag flip-btn-tag ${showBack ? 'active' : ''}" onclick="updateSlot(${index}, 'showBack', ${!showBack})">🔄</button>
+            <button class="bar-btn-tag shiny-btn-tag ${isShiny ? 'active' : ''}" onclick="updateSlot(${index}, 'shiny', ${!isShiny})">✨</button>
+            <button class="bar-btn-tag" onclick="toggleDrawer(${index})">⚙️</button>
             <button class="btn-danger-sm" onclick="removePokemon(${index})">🗑️</button>
           </div>
         </div>
