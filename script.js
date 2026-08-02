@@ -98,7 +98,6 @@ function playCry(url) {
   audio.play().catch(() => {});
 }
 
-// Optimized Dynamic Sprite Resolution
 function getPokemonSprite(pokemon, isShiny, isFemale, showBack) {
   const g5 = pokemon.sprites?.versions?.['generation-v']?.['black-white']?.animated;
   const dir = showBack ? 'back' : 'front';
@@ -128,7 +127,6 @@ function getNatureDetails(nature) {
   return mod ? `${nature} Nature:\n• Increases: ${mod.boost.toUpperCase()} (+10%)\n• Decreases: ${mod.nerf.toUpperCase()} (-10%)` : `${nature} Nature: Neutral (No stat modifications).`;
 }
 
-// Consolidated Fetcher Helper
 async function fetchEntityDetails(endpoint, cache, key) {
   if (!key) return null;
   if (cache[key]) return cache[key];
@@ -194,6 +192,7 @@ function renderTeamSlots() {
         <div class="slot-top-bar">
           <div>${isLead ? `<span class="leader-badge">👑</span>` : `<span class="card-id">#${String(species.id).padStart(4, '0')}</span>`}</div>
           <div style="display:flex; gap:4px; align-items:center;">
+            <button class="bar-btn-tag" onclick="swapSlots(${index})" title="Move or Swap Slot">⇄ Move</button>
             <button class="bar-btn-tag flip-btn-tag ${showBack ? 'active' : ''}" onclick="updateSlot(${index}, 'showBack', ${!showBack})">🔄 ${showBack ? 'Back' : 'Front'}</button>
             <button class="bar-btn-tag shiny-btn-tag ${isShiny ? 'active' : ''}" onclick="updateSlot(${index}, 'shiny', ${!isShiny})">✨ Shiny</button>
             <button class="bar-btn-tag" onclick="toggleDrawer(${index})">⚙️ Edit</button>
@@ -336,6 +335,25 @@ function toggleDrawer(index) {
 
 function updateSlot(index, field, value) {
   teamState[index][field] = value;
+  refreshUI();
+}
+
+function swapSlots(fromIndex) {
+  const targetSlot = prompt(`Move ${teamState[fromIndex].pokemon ? fmtName(teamState[fromIndex].pokemon.name).toUpperCase() : `Slot #${fromIndex + 1}`} to which slot? (1-6):`, fromIndex === 0 ? 2 : 1);
+  if (!targetSlot) return;
+  
+  const toIndex = parseInt(targetSlot) - 1;
+  if (isNaN(toIndex) || toIndex < 0 || toIndex > 5) {
+    alert("Invalid slot number! Please choose a number between 1 and 6.");
+    return;
+  }
+
+  if (fromIndex === toIndex) return;
+
+  const temp = teamState[fromIndex];
+  teamState[fromIndex] = teamState[toIndex];
+  teamState[toIndex] = temp;
+
   refreshUI();
 }
 
