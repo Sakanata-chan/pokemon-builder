@@ -634,11 +634,4 @@ const jsonInput = document.getElementById('json-file-input');
 document.getElementById('import-json-btn').addEventListener('click', () => jsonInput.click());
 jsonInput.addEventListener('change', importTeamJSON);
 
-document.getElementById('theme-btn').addEventListener('click', () => {
-  const isLight = document.documentElement.getAttribute('data-theme') === 'light';
-  document.documentElement.toggleAttribute('data-theme', !isLight);
-  document.getElementById('theme-icon').textContent = isLight ? '🌙' : '☀️';
-  document.getElementById('theme-text').textContent = isLight ? 'Dark Mode' : 'Light Mode';
-});
-
 init();
