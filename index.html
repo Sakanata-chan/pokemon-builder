@@ -737,7 +737,7 @@
             <!-- Dedicated Top Action Bar -->
             <div class="slot-top-bar">
               <div style="display:flex; align-items:center; gap:4px;">
-                ${isLead ? `<span class="leader-badge">👑 Lead</span>` : `<span class="card-id">#${String(species.id).padStart(4, '0')}</span>`}
+                ${isLead ? `<span class="leader-badge">👑</span>` : `<span class="card-id">#${String(species.id).padStart(4, '0')}</span>`}
               </div>
               <div style="display:flex; gap:4px; align-items:center;">
                 <button class="bar-btn-tag flip-btn-tag ${showBack ? 'active' : ''}" onclick="updateSlot(${index}, 'showBack', ${!showBack})" title="Toggle Front/Back Sprite">
