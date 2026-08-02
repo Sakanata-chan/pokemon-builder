@@ -72,7 +72,7 @@ const TYPE_CHART = {
 
 // --- STATE & CACHE ---
 const createEmptySlot = () => ({
-  pokemon: null, species: null, level: 100, shiny: false, showBack: false, nature: "Hardy",
+  pokemon: null, species: null, nickname: "", level: 100, shiny: false, showBack: false, nature: "Hardy",
   gender: "M", friendship: 255, ability: "", item: "", moves: ["", "", "", ""],
   spriteStyle: "gen5_anim", // Default sprite style
   ivs: { hp: 31, attack: 31, defense: 31, 'special-attack': 31, 'special-defense': 31, speed: 31 },
@@ -241,6 +241,9 @@ function renderTeamSlots() {
         </div>`;
     } else {
       const { pokemon, species, shiny: isShiny, gender, showBack } = slot;
+      // Inside renderTeamSlots(), under the filled card condition:
+      const speciesName = fmtName(pokemon.name);
+      const displayName = slot.nickname ? slot.nickname : speciesName;
       const isFemale = gender === 'F';
       const spriteUrl = getPokemonSprite(pokemon, isShiny, isFemale, showBack, slot.spriteStyle || 'gen5_anim');
       const cryUrl = pokemon.cries?.latest || pokemon.cries?.legacy;
@@ -277,7 +280,9 @@ function renderTeamSlots() {
 
         <div class="card ${isShiny ? 'is-shiny' : ''} ${isLead ? 'lead-slot' : ''}">
           <div class="card-header">
-            <span class="card-name">${fmtName(pokemon.name)}</span>
+            <span class="card-name" title="Species: ${speciesName}">
+              ${displayName} ${slot.nickname ? `<span style="font-size:0.7rem; color:var(--text-muted); font-weight:normal;">(${speciesName})</span>` : ''}
+            </span>            
             <span class="header-gen-badge">Gen ${getGen(species.id)}</span>
             <span class="level-badge">Lv.${slot.level}</span>
             ${genderBadge}
@@ -350,6 +355,10 @@ function renderTeamSlots() {
               <button class="action-btn-sm" style="padding:4px 10px;" onclick="toggleDrawer(${index})">Done</button>
             </div>
             <div class="slot-controls">
+              <div class="field-group">
+                <label>Nickname (Max 12)</label>
+                <input type="text" maxlength="12" placeholder="${speciesName}" value="${slot.nickname}" onchange="updateSlot(${index}, 'nickname', this.value.trim())">
+              </div>
               <div class="field-group"><label>Level</label><input type="number" min="1" max="100" value="${slot.level}" onchange="updateSlot(${index}, 'level', parseInt(this.value))"></div>
               <div class="field-group"><label>Gender</label>
                 <select onchange="updateSlot(${index}, 'gender', this.value)" ${gRate === -1 ? 'disabled' : ''}>
@@ -765,11 +774,15 @@ document.getElementById('export-btn').addEventListener('click', () => {
   let exportText = "";
   teamState.forEach(slot => {
     if (!slot.pokemon) return;
-    const genderStr = slot.gender === 'F' ? ' (F)' : slot.gender === 'M' ? ' (M)' : '';
-    exportText += `${slot.pokemon.name}${genderStr} ${slot.item ? `@ ${slot.item}` : ''}\nAbility: ${slot.ability}\nLevel: ${slot.level}\n`;
+      const genderStr = slot.gender === 'F' ? ' (F)' : slot.gender === 'M' ? ' (M)' : '';
+      const speciesName = fmtName(slot.pokemon.name);
+      const nameStr = slot.nickname ? `${slot.nickname} (${speciesName})` : speciesName;
+
+      exportText += `${nameStr}${genderStr} ${slot.item ? `@ ${slot.item}` : ''}\n`;
+      exportText += `Ability: ${slot.ability}\nLevel: ${slot.level}\n`;
     if (slot.shiny) exportText += `Shiny: Yes\n`;
     if (slot.friendship !== 255) exportText += `Happiness: ${slot.friendship}\n`;
-    exportText += `${slot.nature} Nature\n`;
+      exportText += `${slot.nature} Nature\n`;
 
     const evsArr = STAT_NAMES.map(s => slot.evs[s.key] > 0 ? `${slot.evs[s.key]} ${s.label}` : null).filter(Boolean);
     if (evsArr.length) exportText += `EVs: ${evsArr.join(' / ')}\n`;
