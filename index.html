@@ -14,6 +14,22 @@
     <p>Build your Gen 1–5 team and analyze defensive coverage!</p>
   </header>
 
+<!-- Slot Selection Modal -->
+<div class="modal" id="slot-select-modal">
+  <div class="modal-content" style="max-width: 480px;">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <h3 style="color: var(--primary-yellow);" id="slot-modal-title">Choose Team Slot</h3>
+      <button class="action-btn-sm" id="close-slot-modal-btn">Close</button>
+    </div>
+    
+    <p style="font-size:0.8rem; color:var(--text-muted); margin-top:-6px;">Select a slot to place this Pokémon into:</p>
+
+    <div class="slot-picker-grid" id="slot-picker-container">
+      <!-- 6 Slot buttons populated dynamically by JS -->
+    </div>
+  </div>
+</div>
+  
   <!-- Dashboard Overview -->
   <div class="dashboard">
     <div class="dash-item">
