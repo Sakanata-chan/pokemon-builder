@@ -74,6 +74,7 @@ const TYPE_CHART = {
 const createEmptySlot = () => ({
   pokemon: null, species: null, level: 100, shiny: false, showBack: false, nature: "Hardy",
   gender: "M", friendship: 255, ability: "", item: "", moves: ["", "", "", ""],
+  spriteStyle: "gen5_anim", // Default sprite style
   ivs: { hp: 31, attack: 31, defense: 31, 'special-attack': 31, 'special-defense': 31, speed: 31 },
   evs: { hp: 0, attack: 0, defense: 0, 'special-attack': 0, 'special-defense': 0, speed: 0 }
 });
@@ -113,15 +114,70 @@ function playCry(url) {
   audio.play().catch(() => {});
 }
 
-function getPokemonSprite(pokemon, isShiny, isFemale, showBack) {
-  const g5 = pokemon.sprites?.versions?.['generation-v']?.['black-white']?.animated;
+// Supported Sprite Style Keys
+const SPRITE_VERSIONS = {
+  gen5_anim: "Gen 5 Animated (BW)",
+  showdown: "Showdown 3D Animated",
+  home: "Pokémon HOME 3D",
+  official: "Official Artwork",
+  gen1: "Gen 1 (Yellow)",
+  gen2: "Gen 2 (Crystal)",
+  gen3: "Gen 3 (Emerald)",
+  gen4: "Gen 4 (Platinum)"
+};
+
+function getPokemonSprite(pokemon, isShiny, isFemale, showBack, versionKey = 'gen5_anim') {
   const dir = showBack ? 'back' : 'front';
   const shiny = isShiny ? '_shiny' : '_default';
   const female = isFemale ? '_female' : '';
 
+  const sprites = pokemon.sprites;
+  const versions = sprites?.versions;
+
+  // 1. Showdown 3D Animated
+  if (versionKey === 'showdown') {
+    const sd = sprites?.other?.showdown;
+    return sd?.[`${dir}${shiny}${female}`] || sd?.[`${dir}${shiny}`] || sprites?.other?.['official-artwork']?.front_default;
+  }
+
+  // 2. Pokémon HOME 3D
+  if (versionKey === 'home') {
+    const home = sprites?.other?.home;
+    return isShiny ? (home?.front_shiny || home?.front_default) : home?.front_default;
+  }
+
+  // 3. Official Artwork
+  if (versionKey === 'official') {
+    const off = sprites?.other?.['official-artwork'];
+    return isShiny ? (off?.front_shiny || off?.front_default) : off?.front_default;
+  }
+
+  // 4. Gen 1 (Yellow)
+  if (versionKey === 'gen1') {
+    return versions?.['generation-i']?.['yellow']?.[dir === 'back' ? 'back_default' : 'front_default'] || sprites?.front_default;
+  }
+
+  // 5. Gen 2 (Crystal)
+  if (versionKey === 'gen2') {
+    return versions?.['generation-ii']?.['crystal']?.[`${dir}${shiny}`] || sprites?.front_default;
+  }
+
+  // 6. Gen 3 (Emerald)
+  if (versionKey === 'gen3') {
+    return versions?.['generation-iii']?.['emerald']?.[`${dir}_default`] || sprites?.front_default;
+  }
+
+  // 7. Gen 4 (Platinum)
+  if (versionKey === 'gen4') {
+    const g4 = versions?.['generation-iv']?.['platinum'];
+    return g4?.[`${dir}${shiny}${female}`] || g4?.[`${dir}${shiny}`] || sprites?.front_default;
+  }
+
+  // Default: Gen 5 Animated (BW)
+  const g5 = versions?.['generation-v']?.['black-white']?.animated;
   return g5?.[`${dir}${shiny}${female}`] || g5?.[`${dir}${shiny}`] 
-      || pokemon.sprites?.[`${dir}${shiny}${female}`] || pokemon.sprites?.[`${dir}${shiny}`] 
-      || pokemon.sprites?.other?.['official-artwork']?.front_default;
+      || sprites?.[`${dir}${shiny}${female}`] || sprites?.[`${dir}${shiny}`] 
+      || sprites?.other?.['official-artwork']?.front_default;
 }
 
 function calculateStat(base, iv, ev, level, statKey, nature) {
@@ -186,7 +242,7 @@ function renderTeamSlots() {
     } else {
       const { pokemon, species, shiny: isShiny, gender, showBack } = slot;
       const isFemale = gender === 'F';
-      const spriteUrl = getPokemonSprite(pokemon, isShiny, isFemale, showBack);
+      const spriteUrl = getPokemonSprite(pokemon, isShiny, isFemale, showBack, slot.spriteStyle || 'gen5_anim');
       const cryUrl = pokemon.cries?.latest || pokemon.cries?.legacy;
       const gRate = species.gender_rate;
 
@@ -306,6 +362,14 @@ function renderTeamSlots() {
                 <select onchange="updateSlot(${index}, 'shiny', this.value === 'true')">
                   <option value="false" ${!isShiny ? 'selected' : ''}>No</option>
                   <option value="true" ${isShiny ? 'selected' : ''}>Yes</option>
+                </select>
+              </div>
+              <div class="field-group">
+                <label>Sprite Style</label>
+                <select onchange="updateSlot(${index}, 'spriteStyle', this.value)">
+                  ${Object.entries(SPRITE_VERSIONS).map(([key, label]) => `
+                    <option value="${key}" ${(slot.spriteStyle || 'gen5_anim') === key ? 'selected' : ''}>${label}</option>
+                  `).join('')}
                 </select>
               </div>
               <div class="field-group"><label>Nature</label>
