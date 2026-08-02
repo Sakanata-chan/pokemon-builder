@@ -103,7 +103,7 @@ function refreshUI() {
   // 3. Restore the open drawer state
   openDrawerIndices.forEach(idx => {
     const card = document.querySelectorAll('.grid .card')[idx];
-    if (card) card.classList.add('drawer-open');
+    if (card) card.classList.add(f'drawer-open');
   });
 }
 
@@ -834,6 +834,9 @@ async function init() {
     // 1. Fetch Gen 1-5 species
     const data = await fetch('https://pokeapi.co/api/v2/pokemon-species?limit=649').then(r => r.json());
     
+    // Keywords to exclude post-Gen 5 mechanics
+    const EXCLUDED_FORM_KEYWORDS = ['mega', 'gmax', 'alola', 'galar', 'hisui', 'paldea', 'totem', 'starter'];
+
     // 2. Fetch full details for species with varieties/forms
     const speciesPromises = data.results.map(async (item, idx) => {
       const id = idx + 1;
@@ -842,18 +845,25 @@ async function init() {
       try {
         const speciesData = await fetch(item.url).then(r => r.json());
         
-        // If the Pokémon has multiple forms/varieties (like Meloetta, Frillish-Female, Giratina, etc.)
+        // If the Pokémon has multiple forms/varieties
         if (speciesData.varieties && speciesData.varieties.length > 1) {
-          return speciesData.varieties.map(v => {
-            const varName = v.pokemon.name; // e.g. "meloetta-pirouette", "frillish-female"
-            let label = fmtName(varName);
-            
-            // Format friendly display names
-            if (varName.endsWith('-female')) label = `${fmtName(speciesData.name)} (Female)`;
-            else if (varName.endsWith('-male')) label = `${fmtName(speciesData.name)} (Male)`;
-
-            return { id, name: varName, displayName: label, gen };
+          const validVarieties = speciesData.varieties.filter(v => {
+            const vName = v.pokemon.name.toLowerCase();
+            // Filter out any form containing excluded post-Gen 5 keywords
+            return !EXCLUDED_FORM_KEYWORDS.some(kw => vName.includes(kw));
           });
+
+          if (validVarieties.length > 0) {
+            return validVarieties.map(v => {
+              const varName = v.pokemon.name;
+              let label = fmtName(varName);
+              
+              if (varName.endsWith('-female')) label = `${fmtName(speciesData.name)} (Female)`;
+              else if (varName.endsWith('-male')) label = `${fmtName(speciesData.name)} (Male)`;
+
+              return { id, name: varName, displayName: label, gen };
+            });
+          }
         }
       } catch (e) { /* fallback to default */ }
 
