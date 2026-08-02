@@ -634,8 +634,12 @@ function attachSearchListeners() {
       const matches = speciesIndex.filter(s => s.name.includes(query)).slice(0, 8);
       if (!matches.length) return (list.style.display = 'none');
 
-      list.innerHTML = matches.map(m => `<div class="suggestion-item" onclick="selectPokemon(${index}, '${m.name}')">${fmtName(m.name)}</div>`).join('');
-      list.style.display = 'block';
+      // Replace inside attachSearchListeners():
+      list.innerHTML = matches.map(m => `
+        <div class="suggestion-item" onclick="selectPokemon(${index}, '${m.name}')">
+          ${m.displayName || fmtName(m.name)}
+        </div>
+      `).join('');      list.style.display = 'block';
     });
   });
 }
@@ -648,12 +652,17 @@ function renderPokedexGrid() {
   const filtered = speciesIndex.filter(i => (i.name.includes(query) || String(i.id).includes(query)) && (genFilter === 'all' || i.gen === parseInt(genFilter)));
   document.getElementById('dex-results-count').textContent = `Showing ${filtered.length} Pokémon`;
 
+  // Replace inside renderPokedexGrid():
   container.innerHTML = filtered.map(item => `
     <div class="dex-card" onclick="promptSlotSelection('${item.name}')">
-      <div class="dex-meta-row"><span class="dex-number">#${String(item.id).padStart(3, '0')}</span><span class="gen-badge">Gen ${item.gen}</span></div>
+      <div class="dex-meta-row">
+        <span class="dex-number">#${String(item.id).padStart(3, '0')}</span>
+        <span class="gen-badge">Gen ${item.gen}</span>
+      </div>
       <img class="dex-thumb" src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${item.id}.png" alt="${item.name}" loading="lazy">
-      <span class="dex-name">${fmtName(item.name)}</span>
-    </div>`).join('');
+      <span class="dex-name">${item.displayName || fmtName(item.name)}</span>
+    </div>
+  `).join('');
 }
 
 let pendingPokemonSelection = null;
@@ -805,9 +814,41 @@ async function init() {
   if (batchNatureSelect) batchNatureSelect.innerHTML = NATURES.map(n => `<option value="${n}">${n}</option>`).join('');
 
   try {
+    // 1. Fetch Gen 1-5 species
     const data = await fetch('https://pokeapi.co/api/v2/pokemon-species?limit=649').then(r => r.json());
-    speciesIndex = data.results.map((item, idx) => ({ id: idx + 1, name: item.name, gen: getGen(idx + 1) }));
-  } catch (e) { console.error("Index load failed", e); }
+    
+    // 2. Fetch full details for species with varieties/forms
+    const speciesPromises = data.results.map(async (item, idx) => {
+      const id = idx + 1;
+      const gen = getGen(id);
+      
+      try {
+        const speciesData = await fetch(item.url).then(r => r.json());
+        
+        // If the Pokémon has multiple forms/varieties (like Meloetta, Frillish-Female, Giratina, etc.)
+        if (speciesData.varieties && speciesData.varieties.length > 1) {
+          return speciesData.varieties.map(v => {
+            const varName = v.pokemon.name; // e.g. "meloetta-pirouette", "frillish-female"
+            let label = fmtName(varName);
+            
+            // Format friendly display names
+            if (varName.endsWith('-female')) label = `${fmtName(speciesData.name)} (Female)`;
+            else if (varName.endsWith('-male')) label = `${fmtName(speciesData.name)} (Male)`;
+
+            return { id, name: varName, displayName: label, gen };
+          });
+        }
+      } catch (e) { /* fallback to default */ }
+
+      return [{ id, name: item.name, displayName: fmtName(item.name), gen }];
+    });
+
+    const speciesResults = await Promise.all(speciesPromises);
+    speciesIndex = speciesResults.flat();
+
+  } catch (e) { 
+    console.error("Index load failed", e); 
+  }
   refreshUI();
 }
 
