@@ -167,7 +167,7 @@ h1 { color: var(--primary-yellow); font-size: 2.2rem; }
 .gender-male { color: #6890f0; } .gender-female { color: #f85888; } .gender-genderless { color: var(--text-muted); font-size: 0.75rem; }
 
 .meta-badges-container { display: flex; flex-wrap: wrap; gap: 5px; justify-content: center; align-items: center; margin: 4px 0 6px 0; width: 100%; }
-.pill-badge { font-size: 0.7rem; font-weight: 600; padding: 2px 7px; border-radius: 12px; border: 1px solid var(--control-border); background-color: var(--select-bg); text-transform: capitalize; white-space: nowrap; }
+.pill-badge { font-size: 0.7rem; font-weight: 600; padding: 2px 7px; border-radius: 12px; border: 1px solid var(--control-border); background-color: var(--select-bg); text-transform: capitalize; white-space: nowrap; cursor: help; }
 .pill-nature { color: var(--primary-yellow); }
 .pill-friend { color: #ff80ab; }
 .pill-item { color: #b388ff; }
@@ -631,4 +631,14 @@ header, .dashboard, .control-panel, .grid, .analysis-section {
 	font-style: italic;
 	box-shadow: 0 2px 8px var(--shadow-color);
 	text-align: left;
+}
+
+.type-badge { 
+    padding: 2px 6px; 
+    border-radius: 4px; 
+    font-size: 0.65rem; 
+    text-transform: uppercase; 
+    font-weight: bold; 
+    color: #fff; 
+    cursor: help; /* 👈 Add this */
 }
