@@ -117,6 +117,8 @@ let maxTeamSlots = 6;
 let teamState = Array.from({ length: maxTeamSlots }, createEmptySlot);
 let speciesIndex = [];
 const moveCache = {}, abilityCache = {};
+let draggedSlotIndex = null;
+let activeMovePickerState = null;
 
 // --- UTILS ---
 const getGen = id => id <= 151 ? 1 : id <= 251 ? 2 : id <= 386 ? 3 : id <= 493 ? 4 : 5;
@@ -130,6 +132,7 @@ function refreshUI() {
 	
 	renderTeamSlots();
 	renderAnalysis();
+	renderOffensiveAnalysis();
 	
 	openDrawerIndices.forEach(idx => {
 		document.querySelectorAll('.grid .card')[idx]?.classList.add('drawer-open');
@@ -146,44 +149,41 @@ const SPRITE_VERSIONS = {
 };
 
 function getTypeEffectivenessDetails(type, dualTypes) {
-    const weakTo = [], resistsTo = [], immuneTo = [];
-    const superEffectiveVs = [], notVeryEffectiveVs = [], noEffectVs = [];
+	const weakTo = [], resistsTo = [], immuneTo = [];
+	const superEffectiveVs = [], notVeryEffectiveVs = [], noEffectVs = [];
 	
-    // --- 1. DEFENSIVE: Taking Damage ---
-    ALL_TYPES.forEach(atkType => {
-        let mult = 1.0;
-        dualTypes.forEach(defType => {
-            if (TYPE_CHART[atkType]?.[defType] !== undefined) {
-                mult *= TYPE_CHART[atkType][defType];
+	ALL_TYPES.forEach(atkType => {
+		let mult = 1.0;
+		dualTypes.forEach(defType => {
+			if (TYPE_CHART[atkType]?.[defType] !== undefined) {
+				mult *= TYPE_CHART[atkType][defType];
 			}
 		});
-        if (mult > 1.0) weakTo.push(`${fmtName(atkType)} (${mult}x)`);
-        else if (mult === 0) immuneTo.push(fmtName(atkType));
-        else if (mult < 1.0) resistsTo.push(`${fmtName(atkType)} (${mult}x)`);
+		if (mult > 1.0) weakTo.push(`${fmtName(atkType)} (${mult}x)`);
+		else if (mult === 0) immuneTo.push(fmtName(atkType));
+		else if (mult < 1.0) resistsTo.push(`${fmtName(atkType)} (${mult}x)`);
 	});
 	
-    // --- 2. OFFENSIVE: Dealing Damage (STAB for this type) ---
-    ALL_TYPES.forEach(defType => {
-        const mult = TYPE_CHART[type]?.[defType] ?? 1.0;
-        if (mult > 1.0) superEffectiveVs.push(fmtName(defType));
-        else if (mult === 0) noEffectVs.push(fmtName(defType));
-        else if (mult < 1.0) notVeryEffectiveVs.push(fmtName(defType));
+	ALL_TYPES.forEach(defType => {
+		const mult = TYPE_CHART[type]?.[defType] ?? 1.0;
+		if (mult > 1.0) superEffectiveVs.push(fmtName(defType));
+		else if (mult === 0) noEffectVs.push(fmtName(defType));
+		else if (mult < 1.0) notVeryEffectiveVs.push(fmtName(defType));
 	});
 	
-    // --- 3. BUILD TOOLTIP TEXT ---
-    let text = `=== ${type.toUpperCase()} TYPE MATCHUPS ===\n\n`;
+	let text = `=== ${type.toUpperCase()} TYPE MATCHUPS ===\n\n`;
 	
-    text += `🛡️ DEFENSIVE (Taking Damage as ${dualTypes.map(fmtName).join('/')}):\n`;
-    text += `• Weak to: ${weakTo.length ? weakTo.join(', ') : 'None'}\n`;
-    text += `• Resists: ${resistsTo.length ? resistsTo.join(', ') : 'None'}\n`;
-    text += `• Immune to: ${immuneTo.length ? immuneTo.join(', ') : 'None'}\n\n`;
+	text += `🛡️ DEFENSIVE (Taking Damage as ${dualTypes.map(fmtName).join('/')}):\n`;
+	text += `• Weak to: ${weakTo.length ? weakTo.join(', ') : 'None'}\n`;
+	text += `• Resists: ${resistsTo.length ? resistsTo.join(', ') : 'None'}\n`;
+	text += `• Immune to: ${immuneTo.length ? immuneTo.join(', ') : 'None'}\n\n`;
 	
-    text += `⚔️ OFFENSIVE (Attacking with ${type.toUpperCase()} STAB):\n`;
-    text += `• Super-effective (2x) vs: ${superEffectiveVs.length ? superEffectiveVs.join(', ') : 'None'}\n`;
-    text += `• Not very effective (0.5x) vs: ${notVeryEffectiveVs.length ? notVeryEffectiveVs.join(', ') : 'None'}\n`;
-    text += `• No effect (0x) vs: ${noEffectVs.length ? noEffectVs.join(', ') : 'None'}`;
+	text += `⚔️ OFFENSIVE (Attacking with ${type.toUpperCase()} STAB):\n`;
+	text += `• Super-effective (2x) vs: ${superEffectiveVs.length ? superEffectiveVs.join(', ') : 'None'}\n`;
+	text += `• Not very effective (0.5x) vs: ${notVeryEffectiveVs.length ? notVeryEffectiveVs.join(', ') : 'None'}\n`;
+	text += `• No effect (0x) vs: ${noEffectVs.length ? noEffectVs.join(', ') : 'None'}`;
 	
-    return text;
+	return text;
 }
 
 function getPokemonSprite(pokemon, isShiny, isFemale, showBack, versionKey = 'gen5_anim') {
@@ -205,7 +205,6 @@ function getPokemonSprite(pokemon, isShiny, isFemale, showBack, versionKey = 'ge
 	}
 }
 
-// ✅ Replace calculateStat() with this:
 function calculateStat(base, iv, ev, level, statKey, nature) {
 	if (statKey === 'hp') {
 		const val = base === 1 ? 1 : Math.floor(((2 * base + iv + Math.floor(ev / 4)) * level) / 100) + level + 10;
@@ -248,6 +247,136 @@ async function fetchEntityDetails(endpoint, cache, key) {
 const fetchMoveDetails = move => fetchEntityDetails('move', moveCache, move);
 const fetchAbilityDetails = ability => fetchEntityDetails('ability', abilityCache, ability);
 
+// --- SEARCHABLE MOVE PICKER CONTROLLERS ---
+async function openMovePicker(slotIdx, moveIdx) {
+	const slot = teamState[slotIdx];
+	if (!slot || !slot.pokemon) return;
+
+	activeMovePickerState = { slotIdx, moveIdx };
+	document.getElementById('move-picker-title').textContent = `Select Move ${moveIdx + 1} for ${fmtName(slot.pokemon.name)}`;
+	
+	const typeFilter = document.getElementById('move-type-filter');
+	if (typeFilter && typeFilter.options.length <= 1) {
+		typeFilter.innerHTML = '<option value="all">All Types</option>' + 
+			ALL_TYPES.map(t => `<option value="${t}">${fmtName(t)}</option>`).join('');
+	}
+	
+	document.getElementById('move-search-input').value = '';
+	document.getElementById('move-type-filter').value = 'all';
+
+	// Pre-fetch move cache for pokemon learnset
+	const unchachedMoves = slot.pokemon.moves.map(m => m.move.name).filter(m => !moveCache[m]);
+	if (unchachedMoves.length) {
+		await Promise.all(unchachedMoves.map(m => fetchMoveDetails(m)));
+	}
+
+	renderMovePickerList();
+	document.getElementById('move-picker-modal').style.display = 'flex';
+}
+
+function renderMovePickerList() {
+	if (!activeMovePickerState) return;
+	const { slotIdx } = activeMovePickerState;
+	const slot = teamState[slotIdx];
+	
+	const query = document.getElementById('move-search-input').value.toLowerCase().trim();
+	const typeFilter = document.getElementById('move-type-filter').value;
+	const container = document.getElementById('move-picker-list');
+
+	const filteredMoves = slot.pokemon.moves.filter(m => {
+		const nameMatch = m.move.name.includes(query) || fmtName(m.move.name).toLowerCase().includes(query);
+		const cached = moveCache[m.move.name];
+		const typeMatch = typeFilter === 'all' || (cached && cached.type === typeFilter);
+		return nameMatch && typeMatch;
+	});
+
+	if (!filteredMoves.length) {
+		container.innerHTML = `<div style="text-align:center; color:var(--text-muted); padding:12px; font-size:0.8rem;">No matching moves found.</div>`;
+		return;
+	}
+
+	container.innerHTML = filteredMoves.map(m => {
+		const mName = m.move.name;
+		const cached = moveCache[mName];
+		const type = cached ? cached.type : 'normal';
+		const pwr = cached ? cached.power : '—';
+		const acc = cached ? cached.accuracy : '—';
+		const catIcon = cached ? (cached.damageClass === 'physical' ? '💥' : cached.damageClass === 'special' ? '🔮' : '🛡️') : '❓';
+
+		return `
+		<div class="slot-picker-card" onclick="confirmMoveSelection('${mName}')" style="justify-content:space-between;">
+			<div style="display:flex; align-items:center; gap:8px;">
+				<span class="type-badge ${type}">${type.slice(0, 3)}</span>
+				<span style="font-size:0.82rem; font-weight:700; text-transform:capitalize;">${catIcon} ${fmtName(mName)}</span>
+			</div>
+			<div style="font-size:0.7rem; color:var(--text-muted);">
+				Pwr <b>${pwr}</b> | Acc <b>${acc}</b>
+			</div>
+		</div>`;
+	}).join('');
+}
+
+async function confirmMoveSelection(moveName) {
+	if (!activeMovePickerState) return;
+	const { slotIdx, moveIdx } = activeMovePickerState;
+
+	document.getElementById('move-picker-modal').style.display = 'none';
+	await handleMoveSelect(slotIdx, moveIdx, moveName);
+	activeMovePickerState = null;
+}
+
+function clearMoveSlot(slotIdx, moveIdx) {
+	teamState[slotIdx].moves[moveIdx] = "";
+	refreshUI();
+}
+
+// --- DRAG AND DROP HANDLERS ---
+function handleDragStart(e) {
+	if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'BUTTON') {
+		e.preventDefault();
+		return;
+	}
+	draggedSlotIndex = parseInt(this.dataset.index, 10);
+	this.classList.add('is-dragging');
+	e.dataTransfer.effectAllowed = 'move';
+	e.dataTransfer.setData('text/plain', draggedSlotIndex);
+}
+
+function handleDragOver(e) {
+	e.preventDefault();
+	e.dataTransfer.dropEffect = 'move';
+	const targetIndex = parseInt(this.dataset.index, 10);
+	if (targetIndex !== draggedSlotIndex) {
+		this.classList.add('drag-over');
+	}
+}
+
+function handleDragLeave() {
+	this.classList.remove('drag-over');
+}
+
+function handleDrop(e) {
+	e.preventDefault();
+	e.stopPropagation();
+	this.classList.remove('drag-over');
+	const targetIndex = parseInt(this.dataset.index, 10);
+
+	if (draggedSlotIndex !== null && draggedSlotIndex !== targetIndex) {
+		const temp = teamState[draggedSlotIndex];
+		teamState[draggedSlotIndex] = teamState[targetIndex];
+		teamState[targetIndex] = temp;
+		refreshUI();
+	}
+}
+
+function handleDragEnd() {
+	this.classList.remove('is-dragging');
+	document.querySelectorAll('.slot-wrapper').forEach(wrapper => {
+		wrapper.classList.remove('drag-over', 'is-dragging');
+	});
+	draggedSlotIndex = null;
+}
+
 // --- CORE RENDER FUNCTIONS ---
 function renderTeamSlots() {
 	const grid = document.getElementById('pokemon-grid');
@@ -256,6 +385,15 @@ function renderTeamSlots() {
 	teamState.forEach((slot, index) => {
 		const slotWrapper = document.createElement('div');
 		slotWrapper.className = 'slot-wrapper';
+		slotWrapper.setAttribute('draggable', 'true');
+		slotWrapper.dataset.index = index;
+
+		slotWrapper.addEventListener('dragstart', handleDragStart);
+		slotWrapper.addEventListener('dragover', handleDragOver);
+		slotWrapper.addEventListener('dragleave', handleDragLeave);
+		slotWrapper.addEventListener('drop', handleDrop);
+		slotWrapper.addEventListener('dragend', handleDragEnd);
+
 		const isLead = index === 0;
 		
 		if (!slot.pokemon) {
@@ -264,11 +402,11 @@ function renderTeamSlots() {
 			${isLead ? `<div class="leader-badge" style="position:absolute; top:12px; left:12px;">👑 Leader</div>` : ''}
 			<div class="card-id">Slot #${index + 1}</div>
 			<div class="search-box">
-            <input type="text" class="search-input" placeholder="${isLead ? '+ Choose Lead Pokémon...' : '+ Choose Pokémon...'}" data-index="${index}">
-            <div class="suggestions-list" id="suggestions-${index}"></div>
+			<input type="text" class="search-input" placeholder="${isLead ? '+ Choose Lead Pokémon...' : '+ Choose Pokémon...'}" data-index="${index}">
+			<div class="suggestions-list" id="suggestions-${index}"></div>
 			</div>
 			</div>`;
-			} else {
+		} else {
 			const { pokemon, species, shiny: isShiny, gender, showBack } = slot;
 			const speciesName = fmtName(pokemon.name.replace(/-(female|male)$/i, ''));
 			const displayName = slot.nickname || speciesName;
@@ -284,7 +422,6 @@ function renderTeamSlots() {
 			const natureDesc = getNatureDetails(slot.nature);
 			const activeAbility = abilityCache[slot.ability];
 			
-			// ✅ Update the calculatedStats block inside renderTeamSlots():
 			const calculatedStats = STAT_NAMES.map(s => {
 				const base = pokemon.stats.find(p => p.stat.name === s.key)?.base_stat || 0;
 				const res = calculateStat(base, slot.ivs[s.key] ?? 31, slot.evs[s.key] ?? 0, slot.level, s.key, slot.nature);
@@ -295,16 +432,16 @@ function renderTeamSlots() {
 			slotWrapper.innerHTML = `
 			<div class="slot-top-bar">
 			<div style="display:flex; align-items:center; gap:4px;">
-            ${index > 0 ? `<button class="bar-btn-tag" onclick="moveSlot(${index}, -1)" title="Move Left">◄</button>` : ''}
-            ${index < teamState.length - 1 ? `<button class="bar-btn-tag" onclick="moveSlot(${index}, 1)" title="Move Right">►</button>` : ''}
-            ${isLead ? `<span class="leader-badge">👑</span>` : `<span class="card-id">#${String(species.id).padStart(4, '0')}</span>`}
+			${index > 0 ? `<button class="bar-btn-tag" onclick="moveSlot(${index}, -1)" title="Move Left">◄</button>` : ''}
+			${index < teamState.length - 1 ? `<button class="bar-btn-tag" onclick="moveSlot(${index}, 1)" title="Move Right">►</button>` : ''}
+			${isLead ? `<span class="leader-badge">👑</span>` : `<span class="card-id">#${String(species.id).padStart(4, '0')}</span>`}
 			</div>
 			<div style="display:flex; gap:4px; align-items:center;">
-            <button class="bar-btn-tag flip-btn-tag ${showBack ? 'active' : ''}" onclick="updateSlot(${index}, 'showBack', ${!showBack})" title="Toggle Front/Back Sprite">🔄</button>
+			<button class="bar-btn-tag flip-btn-tag ${showBack ? 'active' : ''}" onclick="updateSlot(${index}, 'showBack', ${!showBack})" title="Toggle Front/Back Sprite">🔄</button>
 			<button class="bar-btn-tag desc-btn-tag ${slot.showDesc ? 'active' : ''}" onclick="updateSlot(${index}, 'showDesc', ${!slot.showDesc})" title="Toggle Pokédex Description">📖</button>
-            <button class="bar-btn-tag" onclick="toggleDrawer(${index})" title="Edit Pokémon Stats/Moves">⚙️</button>
-            <button class="bar-btn-tag" onclick="exportSlotAsImage(${index})" title="Export Pokémon as Image">📸</button>
-            <button class="btn-danger-sm" onclick="removePokemon(${index})" title="Remove Pokémon">🗑️</button>
+			<button class="bar-btn-tag" onclick="toggleDrawer(${index})" title="Edit Pokémon Stats/Moves">⚙️</button>
+			<button class="bar-btn-tag" onclick="exportSlotAsImage(${index})" title="Export Pokémon as Image">📸</button>
+			<button class="btn-danger-sm" onclick="removePokemon(${index})" title="Remove Pokémon">🗑️</button>
 			</div>
 			</div>
 			
@@ -316,15 +453,15 @@ function renderTeamSlots() {
 			
 			<div class="card ${isShiny ? 'is-shiny' : ''} ${isLead ? 'lead-slot' : ''}">
 			<div class="card-header">
-            <span class="card-name" title="Species: ${speciesName}">
+			<span class="card-name" title="Species: ${speciesName}">
 			${displayName} ${slot.nickname ? `<span style="font-size:0.7rem; color:var(--text-muted); font-weight:normal;">(${speciesName})</span>` : ''}
-            </span>            
-            <span class="level-badge">Lv.${slot.level}</span>
-            ${genderBadge}
+			</span>            
+			<span class="level-badge">Lv.${slot.level}</span>
+			${genderBadge}
 			</div>
 			
 			<div class="types">
-            <span class="header-gen-badge">Gen ${getGen(species.id)}</span>
+			<span class="header-gen-badge">Gen ${getGen(species.id)}</span>
 			${pokemon.types.map(t => {
 				const pokeTypes = pokemon.types.map(pt => pt.type.name);
 				const tooltip = getTypeEffectivenessDetails(t.type.name, pokeTypes);
@@ -334,25 +471,25 @@ function renderTeamSlots() {
 			
 			<!-- Pokémon Sprite -->
 			<div class="sprite-container">
-            <img src="${spriteUrl}" alt="${pokemon.name}">
+			<img src="${spriteUrl}" alt="${pokemon.name}">
 			</div>
 			
 			<div class="meta-badges-container">
-            <div class="pill-badge pill-nature" title="${natureDesc}">${slot.nature}</div>
-            <div class="pill-badge pill-friend" title="${friendInfo.desc}">♥ ${slot.friendship}/255</div>
-            ${slot.item ? `<div class="pill-badge pill-item" title="${ITEM_DESCRIPTIONS[slot.item] || ''}">🎒 ${slot.item}</div>` : ''}
-            ${slot.ability ? `<div class="pill-badge pill-ability" title="${activeAbility?.desc || 'Loading...'}">${fmtName(slot.ability)}</div>` : ''}
+			<div class="pill-badge pill-nature" title="${natureDesc}">${slot.nature}</div>
+			<div class="pill-badge pill-friend" title="${friendInfo.desc}">♥ ${slot.friendship}/255</div>
+			${slot.item ? `<div class="pill-badge pill-item" title="${ITEM_DESCRIPTIONS[slot.item] || ''}">🎒 ${slot.item}</div>` : ''}
+			${slot.ability ? `<div class="pill-badge pill-ability" title="${activeAbility?.desc || 'Loading...'}">${fmtName(slot.ability)}</div>` : ''}
 			</div>
 			
 			<div class="moveset-card">
-            ${slot.moves.map(mName => {
+			${slot.moves.map(mName => {
 				const move = moveCache[mName];
 				if (!move || !mName) return `<div class="move-slot empty" title="Empty Move Slot"><span class="move-empty-txt">— Empty Move —</span></div>`;
 				
 				const catIcon = move.damageClass === 'physical' ? '💥' : move.damageClass === 'special' ? '🔮' : '🛡️';
 				const moveTooltip = `${fmtName(move.name).toUpperCase()} (${move.type.toUpperCase()})\n• Class: ${move.damageClass.toUpperCase()}\n• Power: ${move.power} | Acc: ${move.accuracy} | PP: ${move.pp}\n• Effect: ${move.desc}`;
 				return `
-                <div class="move-slot" title="${moveTooltip}">
+				<div class="move-slot" title="${moveTooltip}">
 				<div class="move-type-pill ${move.type}">
 				<span class="move-cat-icon">${catIcon}</span>
 				<span class="move-type-lbl">${move.type.slice(0, 3)}</span>
@@ -365,36 +502,36 @@ function renderTeamSlots() {
 				<span>PP <b>${move.pp}</b></span>
 				</div>
 				</div>
-                </div>`;
+				</div>`;
 			}).join('')}
 			</div>
 			
 			<div class="stats-graph-container">
-            ${calculatedStats.map(st => {
+			${calculatedStats.map(st => {
 				const cls = st.mult === 1.1 ? 'boost' : st.mult === 0.9 ? 'nerf' : '';
 				const pct = Math.min(100, Math.max(8, Math.round((st.val / st.maxPossible) * 100)));
 				return `
-                <div class="stat-graph-row">
+				<div class="stat-graph-row">
 				<span class="stat-graph-lbl">${st.label}</span>
 				<span class="stat-graph-val ${cls ? 'stat-' + cls : ''}">${st.val}</span>
 				<div class="stat-bar-track"><div class="stat-bar-fill ${cls ? 'fill-' + cls : ''}" style="width: ${pct}%;"></div></div>
-                </div>`;
+				</div>`;
 			}).join('')}
 			</div>
 			
 			<div class="misc-info-container">
-            <div class="misc-grid">
+			<div class="misc-grid">
 			<div class="misc-item"><span class="misc-lbl">📏 Height</span><span class="misc-val">${(pokemon.height / 10).toFixed(1)} m</span></div>
 			<div class="misc-item"><span class="misc-lbl">⚖️ Weight</span><span class="misc-val">${(pokemon.weight / 10).toFixed(1)} kg</span></div>
-            </div>
+			</div>
 			</div>
 			
 			<div class="controls-drawer" id="drawer-${index}">
-            <div class="drawer-header">
+			<div class="drawer-header">
 			<span class="drawer-title">Edit ${fmtName(pokemon.name)}</span>
 			<button class="action-btn-sm" style="padding:4px 10px;" onclick="toggleDrawer(${index})">Done</button>
-            </div>
-            <div class="slot-controls">
+			</div>
+			<div class="slot-controls">
 			<div class="field-group">
 			<label>Nickname (Max 12)</label>
 			<input type="text" maxlength="12" placeholder="${speciesName}" value="${slot.nickname}" onchange="updateSlot(${index}, 'nickname', this.value.trim())">
@@ -430,9 +567,9 @@ function renderTeamSlots() {
 			<option value="">None</option>${HELD_ITEMS.map(i => `<option value="${i}" ${slot.item === i ? 'selected' : ''}>${i}</option>`).join('')}
 			</select>
 			</div>
-            </div>
+			</div>
 			
-            <div class="field-group" style="width:100%; margin:2px 0;">
+			<div class="field-group" style="width:100%; margin:2px 0;">
 			<div style="display:flex; justify-content:space-between;"><label>EV & IV Customizer</label><span style="font-size:0.65rem; color:var(--primary-yellow);">Total EVs: ${Object.values(slot.evs).reduce((a,b)=>a+b,0)} / 510</span></div>
 			<div class="ev-iv-grid">
 			<div class="ev-iv-row-header">Stat</div><div class="ev-iv-row-header">IV (0-31)</div><div class="ev-iv-row-header">EV (0-252)</div>
@@ -442,27 +579,35 @@ function renderTeamSlots() {
 				<input type="number" min="0" max="252" value="${slot.evs[s.key]}" onchange="updateIvEv(${index}, 'evs', '${s.key}', this.value)">
 			`).join('')}
 			</div>
-            </div>
+			</div>
 			
-            <div class="field-group" style="width:100%; margin:4px 0;">
+			<div class="field-group" style="width:100%; margin:4px 0;">
 			<label>Ability Selection</label>
 			<select onchange="handleAbilitySelect(${index}, this.value)">
 			${pokemon.abilities.map(a => `<option value="${a.ability.name}" ${slot.ability === a.ability.name ? 'selected' : ''}>${fmtName(a.ability.name)} ${a.is_hidden ? '(Hidden)' : ''}</option>`).join('')}
 			</select>
-            </div>
+			</div>
 			
-            <div class="field-group" style="width:100%;">
+			<div class="field-group" style="width:100%;">
 			<label>Moveset Configuration</label>
 			<div class="drawer-moves-container">
-			${[0, 1, 2, 3].map(mIdx => `
-				<div class="move-edit-card">
-				<select onchange="handleMoveSelect(${index}, ${mIdx}, this.value)">
-				<option value="">- Select Move ${mIdx + 1} -</option>
-				${pokemon.moves.map(m => `<option value="${m.move.name}" ${slot.moves[mIdx] === m.move.name ? 'selected' : ''}>${fmtName(m.move.name)}</option>`).join('')}
-				</select>
-			</div>`).join('')}
+			${[0, 1, 2, 3].map(mIdx => {
+				const currentMove = slot.moves[mIdx];
+				const mData = moveCache[currentMove];
+				const btnLabel = currentMove ? fmtName(currentMove) : `- Select Move ${mIdx + 1} -`;
+				const typeClass = mData ? mData.type : '';
+				
+				return `
+				<div class="move-edit-card" style="display:flex; justify-content:space-between; align-items:center; padding:6px 10px;">
+					<button class="action-btn-sm ${typeClass}" style="flex:1; justify-content:flex-start; font-weight:700; text-transform:capitalize;" onclick="openMovePicker(${index}, ${mIdx})">
+						${mData ? `<span class="move-cat-icon">${mData.damageClass === 'physical' ? '💥' : mData.damageClass === 'special' ? '🔮' : '🛡️'}</span>` : ''}
+						${btnLabel}
+					</button>
+					${currentMove ? `<button class="btn-danger-sm" style="margin-left:6px;" onclick="clearMoveSlot(${index}, ${mIdx})">✖</button>` : ''}
+				</div>`;
+			}).join('')}
 			</div>
-            </div>
+			</div>
 			</div>
 			</div>`;
 			
@@ -495,7 +640,7 @@ async function updateSlot(index, field, value) {
 
 function moveSlot(fromIndex, direction) {
 	const toIndex = fromIndex + direction;
-	if (toIndex < 0 || toIndex >= teamState.length) return; // Works with dynamic array lengths
+	if (toIndex < 0 || toIndex >= teamState.length) return;
 	[teamState[fromIndex], teamState[toIndex]] = [teamState[toIndex], teamState[fromIndex]];
 	refreshUI();
 }
@@ -504,7 +649,7 @@ function updateIvEv(slotIdx, type, statKey, val) {
 	let parsed = parseInt(val) || 0;
 	if (type === 'ivs') {
 		teamState[slotIdx].ivs[statKey] = Math.min(31, Math.max(0, parsed));
-		} else {
+	} else {
 		parsed = Math.min(252, Math.max(0, parsed));
 		const otherTotal = Object.keys(teamState[slotIdx].evs).filter(k => k !== statKey).reduce((sum, k) => sum + teamState[slotIdx].evs[k], 0);
 		teamState[slotIdx].evs[statKey] = otherTotal + parsed > 510 ? 510 - otherTotal : parsed;
@@ -529,18 +674,15 @@ function setTeamSize(newSize) {
 	maxTeamSlots = parseInt(newSize, 10);
 	
 	if (teamState.length < maxTeamSlots) {
-		// Expand team capacity
 		while (teamState.length < maxTeamSlots) {
 			teamState.push(createEmptySlot());
 		}
-		} else if (teamState.length > maxTeamSlots) {
-		// Check if slots being removed contain active Pokémon
+	} else if (teamState.length > maxTeamSlots) {
 		const slotsToRemove = teamState.slice(maxTeamSlots);
 		const hasActivePokemon = slotsToRemove.some(slot => slot.pokemon !== null);
 		
 		if (hasActivePokemon) {
 			if (!confirm(`Shrinking team size to ${maxTeamSlots} will delete Pokémon in slot(s) ${maxTeamSlots + 1}–${teamState.length}. Continue?`)) {
-				// Reset select dropdown value back to current length if cancelled
 				document.getElementById('max-slots-select').value = teamState.length;
 				return;
 			}
@@ -591,14 +733,12 @@ async function selectPokemon(index, name) {
 		const speciesSlug = pokemon.species?.name || apiKey.split('-')[0];
 		const species = await fetch(`https://pokeapi.co/api/v2/pokemon-species/${speciesSlug}`).then(r => r.ok ? r.json() : null);
 		
-		// --- ADD THIS BLOCK TO GET GEN 5 FLAVOR TEXT ---
 		let flavorText = "No Pokédex description available.";
 		if (species && species.flavor_text_entries) {
-			// Find Gen 5 entry (black-white or black-2-white-2) in English
 			const gen5Entry = species.flavor_text_entries.find(f => 
 				f.language.name === 'en' && 
 				(f.version.name === 'black' || f.version.name === 'white' || f.version.name === 'black-2-white-2')
-			) || species.flavor_text_entries.find(f => f.language.name === 'en'); // Fallback to any English text
+			) || species.flavor_text_entries.find(f => f.language.name === 'en');
 			
 			if (gen5Entry) {
 				flavorText = gen5Entry.flavor_text.replace(/[\r\n\f]/g, ' ');
@@ -615,7 +755,7 @@ async function selectPokemon(index, name) {
 			gender: defaultGender,
 			friendship: species?.base_happiness ?? 70,
 			ability: defaultAbility,
-			flavorText: flavorText // Store description in slot state
+			flavorText: flavorText
 		};
 		
 		if (defaultAbility) await fetchAbilityDetails(defaultAbility);
@@ -662,19 +802,62 @@ function renderAnalysis() {
 		• ${weaknesses} weak to it
 		• ${resistances} resist it
 		• ${immunities} immune to it">
-        <span class="type-badge ${type}">${type.slice(0, 3)}</span>
-        <div class="analysis-row">
+		<span class="type-badge ${type}">${type.slice(0, 3)}</span>
+		<div class="analysis-row">
 		<span class="analysis-count count-weak" title="Weaknesses">⚠️ ${weaknesses}</span>
 		<span class="analysis-count count-resist" title="Resistances">🛡️ ${resistances}</span>
 		${immunities > 0 ? `<span class="analysis-count count-immune" title="Immunities">✨ ${immunities}</span>` : ''}
-        </div>
+		</div>
+		</div>`;
+	}).join('');
+}
+
+// ⚔️ OFFENSIVE COVERAGE ANALYSIS FUNCTION
+function renderOffensiveAnalysis() {
+	const container = document.getElementById('offense-type-matrix');
+	if (!container) return;
+
+	container.innerHTML = ALL_TYPES.map(defType => {
+		const hittingMoves = [];
+
+		teamState.forEach(slot => {
+			if (!slot.pokemon) return;
+			const pokeName = slot.nickname || fmtName(slot.pokemon.name);
+
+			slot.moves.forEach(mName => {
+				if (!mName) return;
+				const move = moveCache[mName];
+				if (!move || move.damageClass === 'status') return;
+
+				const mult = TYPE_CHART[move.type]?.[defType] ?? 1.0;
+				if (mult > 1.0) {
+					hittingMoves.push(`• ${pokeName}'s ${fmtName(move.name)} (${move.type.toUpperCase()})`);
+				}
+			});
+		});
+
+		const count = hittingMoves.length;
+		const alertClass = count === 0 ? 'threat-high' : 'threat-safe';
+		const tooltip = count > 0 
+			? `Super-Effective Moves vs ${defType.toUpperCase()} Defenders (${count}):\n${hittingMoves.join('\n')}`
+			: `⚠️ Blind Spot: No moves on your team hit ${defType.toUpperCase()} super-effectively!`;
+
+		return `
+		<div class="analysis-card ${alertClass}" title="${tooltip}">
+			<span class="type-badge ${defType}">${defType.slice(0, 3)}</span>
+			<div class="analysis-row">
+				${count > 0 
+					? `<span class="analysis-count count-resist" title="Super-Effective Moves">⚔️ ${count}</span>` 
+					: `<span class="analysis-count count-weak" title="No Super-Effective Coverage">⚠️ 0</span>`
+				}
+			</div>
 		</div>`;
 	}).join('');
 }
 
 function attachSearchListeners() {
 	document.querySelectorAll('.search-input').forEach(input => {
-		if (input.id === 'dex-search-input') return;
+		if (input.id === 'dex-search-input' || input.id === 'move-search-input') return;
 		input.addEventListener('input', (e) => {
 			const index = e.target.dataset.index;
 			const query = e.target.value.toLowerCase().trim();
@@ -709,8 +892,8 @@ function renderPokedexGrid() {
 	container.innerHTML = filtered.map(item => `
 		<div class="dex-card" onclick="promptSlotSelection('${item.name}')">
 		<div class="dex-meta-row">
-        <span class="dex-number">#${String(item.id).padStart(3, '0')}</span>
-        <span class="gen-badge">Gen ${item.gen}</span>
+		<span class="dex-number">#${String(item.id).padStart(3, '0')}</span>
+		<span class="gen-badge">Gen ${item.gen}</span>
 		</div>
 		<img class="dex-thumb" src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${item.id}.png" alt="${item.name}" loading="lazy">
 		<span class="dex-name">${item.displayName || fmtName(item.name)}</span>
@@ -734,12 +917,12 @@ function promptSlotSelection(name) {
 		
 		return `
 		<div class="slot-picker-card ${!isOccupied ? 'is-empty' : ''}" onclick="confirmSlotSelection(${idx})">
-        <span class="slot-picker-num">#${idx + 1}</span>
-        ${isOccupied ? `<img src="${thumbUrl}" style="width:32px; height:32px; object-fit:contain; image-rendering:pixelated;">` : ''}
-        <div class="slot-picker-info">
+		<span class="slot-picker-num">#${idx + 1}</span>
+		${isOccupied ? `<img src="${thumbUrl}" style="width:32px; height:32px; object-fit:contain; image-rendering:pixelated;">` : ''}
+		<div class="slot-picker-info">
 		<span class="slot-picker-name">${pokeName}</span>
 		<span class="slot-picker-status">${statusText}</span>
-        </div>
+		</div>
 		</div>`;
 	}).join('');
 	
@@ -863,6 +1046,22 @@ function toggleDefenseDeck() {
 	}
 }
 
+function toggleOffenseDeck() {
+	const deck = document.getElementById('offense-deck');
+	const icon = document.getElementById('offense-toggle-icon');
+	const text = document.getElementById('offense-toggle-text');
+	
+	const isCollapsed = deck.classList.toggle('collapsed');
+	
+	if (isCollapsed) {
+		icon.textContent = '👁️‍🗨️';
+		text.textContent = 'Unhide Matrix';
+	} else {
+		icon.textContent = '👁️';
+		text.textContent = 'Hide Matrix';
+	}
+}
+
 // --- INIT & GLOBAL EVENT LISTENERS ---
 async function init() {
 	const batchNatureSelect = document.getElementById('batch-nature');
@@ -884,6 +1083,19 @@ document.addEventListener('DOMContentLoaded', () => {
 	document.getElementById('dex-search-input').addEventListener('input', renderPokedexGrid);
 	document.getElementById('dex-gen-filter').addEventListener('change', renderPokedexGrid);
 	
+	// Move Picker Modal Listeners
+	const closeMoveBtn = document.getElementById('close-move-picker-btn');
+	if (closeMoveBtn) {
+		closeMoveBtn.addEventListener('click', () => {
+			document.getElementById('move-picker-modal').style.display = 'none';
+		});
+	}
+	const moveSearchInput = document.getElementById('move-search-input');
+	if (moveSearchInput) moveSearchInput.addEventListener('input', renderMovePickerList);
+	
+	const moveTypeFilter = document.getElementById('move-type-filter');
+	if (moveTypeFilter) moveTypeFilter.addEventListener('change', renderMovePickerList);
+
 	document.getElementById('export-btn').addEventListener('click', () => {
 		let exportText = "";
 		teamState.forEach(slot => {
@@ -912,13 +1124,11 @@ document.addEventListener('DOMContentLoaded', () => {
 	document.getElementById('close-slot-modal-btn').addEventListener('click', () => document.getElementById('slot-select-modal').style.display = 'none');
 	document.getElementById('close-modal-btn').addEventListener('click', () => document.getElementById('export-modal').style.display = 'none');
 	
-	// --- UPDATED CLEAR BUTTON ---
 	document.getElementById('clear-btn').addEventListener('click', () => { 
 		teamState = Array.from({ length: maxTeamSlots }, createEmptySlot); 
 		refreshUI(); 
 	});
 	
-	// --- NEW TEAM SIZE SELECTOR LISTENER ---
 	const slotSelect = document.getElementById('max-slots-select');
 	if (slotSelect) {
 		slotSelect.addEventListener('change', (e) => setTeamSize(e.target.value));
