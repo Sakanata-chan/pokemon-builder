@@ -1,237 +1,235 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Pokémon Team Builder (Gen 1 - 5)</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-  <link rel="stylesheet" href="styles.css">
-</head>
-<body>
-
-  <header>
-    <h1>Pokémon Team Builder</h1>
-    <p>Build your Gen 1–5 team and analyze defensive coverage!</p>
-  </header>
-
-<!-- Slot Selection Modal -->
-<div class="modal" id="slot-select-modal">
-  <div class="modal-content" style="max-width: 480px;">
-    <div style="display:flex; justify-content:space-between; align-items:center;">
-      <h3 style="color: var(--primary-yellow);" id="slot-modal-title">Choose Team Slot</h3>
-      <button class="action-btn-sm" id="close-slot-modal-btn">Close</button>
-    </div>
-    
-    <p style="font-size:0.8rem; color:var(--text-muted); margin-top:-6px;">Select a slot to place this Pokémon into:</p>
-
-    <div class="slot-picker-grid" id="slot-picker-container">
-      <!-- 6 Slot buttons populated dynamically by JS -->
-    </div>
-  </div>
-</div>
-  
-<!-- Unified Header Deck: Dashboard & Control Panel -->
-  <div class="deck-container" id="header-deck">
-    <div class="deck-header">
-      <div class="deck-title">
-        <span>📊 Overview & Controls</span>
-      </div>
-      <button class="action-btn-sm toggle-deck-btn" id="toggle-deck-btn" onclick="toggleHeaderDeck()">
-        <span id="deck-toggle-icon">👁️</span> <span id="deck-toggle-text">Hide Panel</span>
-      </button>
-    </div>
-
-    <div class="deck-body" id="deck-body">
-      <!-- Dashboard Stats Row -->
-      <div class="dashboard">
-        <div class="dash-item">
-          <span class="dash-label">Active Team Members</span>
-          <span class="dash-value" id="team-counter">0 / 6</span>
-        </div>
-        <div class="dash-item">
-          <span class="dash-label">Shinies on Team</span>
-          <span class="dash-value" id="shiny-counter" style="color: #ff007f;">0</span>
-        </div>
-        <div class="dash-item">
-          <span class="dash-label">Average Team Level</span>
-          <span class="dash-value" id="avg-level-counter">--</span>
-        </div>
-      </div>
-
-      <hr class="deck-divider">
-
-      <!-- Control Panel Groups -->
-      <div class="control-panel">
-        <div class="panel-group">
-          <span class="group-label">Tools</span>
-          <div class="group-buttons">
-            <button class="action-btn-sm" id="pokedex-sheet-btn">📖 Directory</button>
-            <button class="action-btn-sm" id="batch-edit-btn">⚡ Batch Edit</button>
-          </div>
-        </div>
-
-        <div class="panel-group">
-          <span class="group-label">Team Size</span>
-          <div class="group-buttons">
-            <select id="max-slots-select" class="action-btn-sm" style="outline: none;">
-              <option value="1">1 Slot</option>
-              <option value="2">2 Slots</option>
-              <option value="3">3 Slots</option>
-              <option value="4">4 Slots</option>
-              <option value="5">5 Slots</option>
-              <option value="6" selected>6 Slots (Standard)</option>
-              <option value="7">7 Slots</option>
-              <option value="8">8 Slots</option>
-              <option value="9">9 Slots</option>
-              <option value="10">10 Slots</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="panel-group">
-          <span class="group-label">Data & Storage</span>
-          <div class="group-buttons">
-            <button class="action-btn-sm" id="save-team-btn" title="Save team to browser memory">💾 Save</button>
-            <button class="action-btn-sm" id="load-team-btn" title="Load saved team from browser">📂 Load</button>
-            <button class="action-btn-sm" id="export-json-btn" title="Export team as JSON file">📥 Export JSON</button>
-            <button class="action-btn-sm" id="import-json-btn" title="Import team from JSON file">📤 Import JSON</button>
-            <input type="file" id="json-file-input" accept=".json" style="display: none;">
-          </div>
-        </div>
-
-        <div class="panel-group">
-          <span class="group-label">Export & Reset</span>
-          <div class="group-buttons">
-            <button class="action-btn-sm" id="export-btn">📋 Showdown</button>
-            <button class="action-btn-sm btn-danger" id="clear-btn">🗑️ Clear Team</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- 6 Pokémon Slot Grid -->
-  <div class="grid" id="pokemon-grid"></div>
-
-  <!-- Defensive Matrix Analysis -->
-<!-- Defensive Matrix Analysis (Collapsible Deck) -->
-  <div class="deck-container" id="defense-deck">
-    <div class="deck-header">
-      <div class="deck-title">
-        <span>🛡️ Team Type Deficiencies & Weaknesses Matrix</span>
-      </div>
-      <button class="action-btn-sm toggle-deck-btn" id="toggle-defense-btn" onclick="toggleDefenseDeck()">
-        <span id="defense-toggle-icon">👁️</span> <span id="defense-toggle-text">Hide Matrix</span>
-      </button>
-    </div>
-
-    <div class="deck-body" id="defense-deck-body">
-      <div class="analysis-grid" id="type-matrix"></div>
-    </div>
-  </div>
-
-  <!-- Showdown Export Modal -->
-  <div class="modal" id="export-modal">
-    <div class="modal-content" style="max-width: 600px;">
-      <h3 style="color: var(--primary-yellow);">Showdown Export</h3>
-      <textarea id="export-text" readonly></textarea>
-      <button class="action-btn-sm" style="align-self: flex-end;" id="close-modal-btn">Close</button>
-    </div>
-  </div>
-
-  <!-- Batch / Bulk Edit Modal -->
-  <div class="modal" id="batch-modal">
-    <div class="modal-content" style="max-width: 650px;">
-      <div style="display:flex; justify-content:space-between; align-items:center;">
-        <h3 style="color: var(--primary-yellow);">⚡ Edit All Active Pokémon at Once</h3>
-        <button class="action-btn-sm" id="close-batch-btn">Close</button>
-      </div>
-      
-      <p style="font-size:0.8rem; color:var(--text-muted); margin-top:-8px;">Apply uniform changes or EV/IV competitive presets across all currently filled Pokémon slots on your team.</p>
-
-      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-top:8px;">
-        <div class="field-group">
-          <label>Set Level for All</label>
-          <div style="display:flex; gap:6px;">
-            <input type="number" id="batch-level" min="1" max="100" value="100">
-            <button class="action-btn-sm" onclick="applyBulkField('level', parseInt(document.getElementById('batch-level').value) || 100)">Apply</button>
-          </div>
-        </div>
-
-        <div class="field-group">
-          <label>Set Nature for All</label>
-          <div style="display:flex; gap:6px;">
-            <select id="batch-nature"></select>
-            <button class="action-btn-sm" onclick="applyBulkField('nature', document.getElementById('batch-nature').value)">Apply</button>
-          </div>
-        </div>
-
-        <div class="field-group">
-          <label>Set Friendship for All (0-255)</label>
-          <div style="display:flex; gap:6px;">
-            <input type="number" id="batch-friendship" min="0" max="255" value="255">
-            <button class="action-btn-sm" onclick="applyBulkField('friendship', Math.min(255, Math.max(0, parseInt(document.getElementById('batch-friendship').value) || 0)))">Apply</button>
-          </div>
-        </div>
-
-        <div class="field-group">
-          <label>Set Shiny Mode for All</label>
-          <div style="display:flex; gap:6px;">
-            <button class="action-btn-sm" style="flex:1;" onclick="applyBulkField('shiny', true)">✨ All Shiny</button>
-            <button class="action-btn-sm" style="flex:1;" onclick="applyBulkField('shiny', false)">Normal</button>
-          </div>
-        </div>
-      </div>
-
-      <hr style="border: 0; border-top: 1px solid var(--card-border); margin: 6px 0;">
-
-      <div class="field-group">
-        <label>⚡ Bulk IV Presets</label>
-        <div class="preset-btn-grid">
-          <button class="preset-btn" onclick="applyBulkIvPreset('max')">Max IVs (31 All Stats)</button>
-          <button class="preset-btn" onclick="applyBulkIvPreset('trickroom')">Trick Room IVs (0 Speed IV)</button>
-        </div>
-      </div>
-
-      <div class="field-group">
-        <label>🏋️ Bulk EV Competitive Presets</label>
-        <div class="preset-btn-grid">
-          <button class="preset-btn" onclick="applyBulkEvPreset('physical')">Physical Sweeper (252 Atk / 252 Spe / 4 HP)</button>
-          <button class="preset-btn" onclick="applyBulkEvPreset('special')">Special Sweeper (252 SpA / 252 Spe / 4 HP)</button>
-          <button class="preset-btn" onclick="applyBulkEvPreset('bulky')">Bulky Pivot (252 HP / 128 Def / 128 SpD)</button>
-          <button class="preset-btn" onclick="applyBulkEvPreset('reset')">Reset EVs (0 All Stats)</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Full Pokédex Directory Sheet Modal -->
-  <div class="modal" id="dex-modal">
-    <div class="modal-content">
-      <div style="display:flex; justify-content:space-between; align-items:center;">
-        <h3 style="color: var(--primary-yellow);">📖 Full Pokédex Directory (Gen 1 - 5)</h3>
-        <button class="action-btn-sm" id="close-dex-btn">Close</button>
-      </div>
-      
-      <div class="dex-filter-bar">
-        <input type="text" id="dex-search-input" class="search-input" placeholder="Search by name or #ID..." style="max-width: 220px;">
-        
-        <select id="dex-gen-filter" style="max-width: 150px;">
-          <option value="all">All Generations</option>
-          <option value="1">Gen 1 (Kanto)</option>
-          <option value="2">Gen 2 (Johto)</option>
-          <option value="3">Gen 3 (Hoenn)</option>
-          <option value="4">Gen 4 (Sinnoh)</option>
-          <option value="5">Gen 5 (Unova)</option>
-        </select>
-
-        <span id="dex-results-count" style="font-size:0.8rem; color:var(--text-muted); font-weight:600;">Showing 649 Pokémon</span>
-      </div>
-
-      <div class="dex-grid" id="dex-grid-container"></div>
-    </div>
-  </div>
-
-  <script src="script.js"></script>
-</body>
-</html>
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<title>Pokémon Team Builder (Gen 1 - 5)</title>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+		<link rel="stylesheet" href="styles.css">
+	</head>
+	<body>
+		
+		<header>
+			<h1>Pokémon Team Builder</h1>
+			<p>Build your Gen 1–5 team and analyze defensive coverage!</p>
+		</header>
+		
+		<!-- Slot Selection Modal -->
+		<div class="modal" id="slot-select-modal">
+			<div class="modal-content" style="max-width: 480px;">
+				<div style="display:flex; justify-content:space-between; align-items:center;">
+					<h3 style="color: var(--primary-yellow);" id="slot-modal-title">Choose Team Slot</h3>
+					<button class="action-btn-sm" id="close-slot-modal-btn">Close</button>
+				</div>
+				
+				<p style="font-size:0.8rem; color:var(--text-muted); margin-top:-6px;">Select a slot to place this Pokémon into:</p>
+				
+				<div class="slot-picker-grid" id="slot-picker-container">
+					<!-- 6 Slot buttons populated dynamically by JS -->
+				</div>
+			</div>
+		</div>
+		
+		<!-- Unified Header Deck: Dashboard & Control Panel -->
+		<div class="deck-container" id="header-deck">
+			<div class="deck-header">
+				<div class="deck-title">
+					<span>📊 Overview & Controls</span>
+				</div>
+				<button class="action-btn-sm toggle-deck-btn" id="toggle-deck-btn" onclick="toggleHeaderDeck()">
+					<span id="deck-toggle-icon">👁️</span> <span id="deck-toggle-text">Hide Panel</span>
+				</button>
+			</div>
+			
+			<div class="deck-body" id="deck-body">
+				<!-- Dashboard Stats Row -->
+				<div class="dashboard">
+					<div class="dash-item">
+						<span class="dash-label">Active Team Members</span>
+						<span class="dash-value" id="team-counter">0 / 6</span>
+					</div>
+					<div class="dash-item">
+						<span class="dash-label">Shinies on Team</span>
+						<span class="dash-value" id="shiny-counter" style="color: #ff007f;">0</span>
+					</div>
+					<div class="dash-item">
+						<span class="dash-label">Average Team Level</span>
+						<span class="dash-value" id="avg-level-counter">--</span>
+					</div>
+				</div>
+				
+				<hr class="deck-divider">
+				
+				<!-- Control Panel Groups -->
+				<div class="control-panel">
+					<div class="panel-group">
+						<span class="group-label">Tools</span>
+						<div class="group-buttons">
+							<button class="action-btn-sm" id="pokedex-sheet-btn">📖 Directory</button>
+							<button class="action-btn-sm" id="batch-edit-btn">⚡ Batch Edit</button>
+						</div>
+					</div>
+					
+					<div class="panel-group">
+						<span class="group-label">Team Size</span>
+						<div class="group-buttons">
+							<select id="max-slots-select" class="action-btn-sm" style="outline: none;">
+								<option value="1">1 Slot</option>
+								<option value="2">2 Slots</option>
+								<option value="3">3 Slots</option>
+								<option value="4">4 Slots</option>
+								<option value="5">5 Slots</option>
+								<option value="6" selected>6 Slots (Standard)</option>
+								<option value="7">7 Slots</option>
+								<option value="8">8 Slots</option>
+								<option value="9">9 Slots</option>
+								<option value="10">10 Slots</option>
+							</select>
+						</div>
+					</div>
+					
+					<div class="panel-group">
+						<span class="group-label">Data & Storage</span>
+						<div class="group-buttons">
+							<button class="action-btn-sm" id="save-team-btn" title="Save team to browser memory">💾 Save</button>
+							<button class="action-btn-sm" id="load-team-btn" title="Load saved team from browser">📂 Load</button>
+							<button class="action-btn-sm" id="export-json-btn" title="Export team as JSON file">📥 Export JSON</button>
+							<button class="action-btn-sm" id="import-json-btn" title="Import team from JSON file">📤 Import JSON</button>
+							<input type="file" id="json-file-input" accept=".json" style="display: none;">
+						</div>
+					</div>
+					
+					<div class="panel-group">
+						<span class="group-label">Export & Reset</span>
+						<div class="group-buttons">
+							<button class="action-btn-sm" id="export-btn">📋 Showdown</button>
+							<button class="action-btn-sm btn-danger" id="clear-btn">🗑️ Clear Team</button>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		
+		<!-- 6 Pokémon Slot Grid -->
+		<div class="grid" id="pokemon-grid"></div>
+		
+		<!-- Defensive Matrix Analysis -->
+		<!-- Defensive Matrix Analysis (Collapsible Deck) -->
+		<div class="deck-container" id="defense-deck">
+			<div class="deck-header">
+				<div class="deck-title">
+					<span>🛡️ Team Type Deficiencies & Weaknesses Matrix</span>
+				</div>
+				<button class="action-btn-sm toggle-deck-btn" id="toggle-defense-btn" onclick="toggleDefenseDeck()">
+					<span id="defense-toggle-icon">👁️</span> <span id="defense-toggle-text">Hide Matrix</span>
+				</button>
+			</div>
+			
+			<div class="deck-body" id="defense-deck-body">
+				<div class="analysis-grid" id="type-matrix"></div>
+				<div class="matrix-legend">
+					<span class="legend-item"><span class="type-lbl-demo">TYPE</span> = Incoming Attack Type</span>
+					<span class="legend-item"><b style="color:#ff4d4d;">⚠️ X</b> = Weak Members (Takes 2x/4x)</span>
+					<span class="legend-item"><b style="color:#78c850;">🛡️ X</b> = Resisting Members (Takes 0.5x/0.25x)</span>
+					<span class="legend-item"><b style="color:#00e5ff;">✨ X</b> = Immune Members (Takes 0x)</span>
+				</div>
+				<div class="analysis-grid" id="type-matrix"></div>
+			</div>
+		</div>
+		
+		<!-- Showdown Export Modal -->
+		<div class="modal" id="export-modal">
+			<div class="modal-content" style="max-width: 600px;">
+				<h3 style="color: var(--primary-yellow);">Showdown Export</h3>
+				<textarea id="export-text" readonly></textarea>
+				<button class="action-btn-sm" style="align-self: flex-end;" id="close-modal-btn">Close</button>
+			</div>
+		</div>
+		
+		<!-- Batch / Bulk Edit Modal -->
+		<div class="modal" id="batch-modal">
+			<div class="modal-content" style="max-width: 650px;">
+				<div style="display:flex; justify-content:space-between; align-items:center;">
+					<h3 style="color: var(--primary-yellow);">⚡ Edit All Active Pokémon at Once</h3>
+					<button class="action-btn-sm" id="close-batch-btn">Close</button>
+				</div>
+				
+				<p style="font-size:0.8rem; color:var(--text-muted); margin-top:-8px;">Apply uniform changes or EV/IV competitive presets across all currently filled Pokémon slots on your team.</p>
+				
+				<div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-top:8px;">
+					<div class="field-group">
+						<label>Set Level for All</label>
+						<div style="display:flex; gap:6px;">
+							<input type="number" id="batch-level" min="1" max="100" value="100">
+							<button class="action-btn-sm" onclick="applyBulkField('level', parseInt(document.getElementById('batch-level').value) || 100)">Apply</button>
+						</div>
+					</div>
+					
+					<div class="field-group">
+						<label>Set Nature for All</label>
+						<div style="display:flex; gap:6px;">
+							<select id="batch-nature"></select>
+							<button class="action-btn-sm" onclick="applyBulkField('nature', document.getElementById('batch-nature').value)">Apply</button>
+						</div>
+					</div>
+					
+					<div class="field-group">
+						<label>Set Friendship for All (0-255)</label>
+						<div style="display:flex; gap:6px;">
+							<input type="number" id="batch-friendship" min="0" max="255" value="255">
+							<button class="action-btn-sm" onclick="applyBulkField('friendship', Math.min(255, Math.max(0, parseInt(document.getElementById('batch-friendship').value) || 0)))">Apply</button>
+						</div>
+					</div>
+					
+					<hr style="border: 0; border-top: 1px solid var(--card-border); margin: 6px 0;">
+					
+					<div class="field-group">
+						<label>⚡ Bulk IV Presets</label>
+						<div class="preset-btn-grid">
+							<button class="preset-btn" onclick="applyBulkIvPreset('max')">Max IVs (31 All Stats)</button>
+							<button class="preset-btn" onclick="applyBulkIvPreset('trickroom')">Trick Room IVs (0 Speed IV)</button>
+						</div>
+					</div>
+					
+					<div class="field-group">
+						<label>🏋️ Bulk EV Competitive Presets</label>
+						<div class="preset-btn-grid">
+							<button class="preset-btn" onclick="applyBulkEvPreset('physical')">Physical Sweeper (252 Atk / 252 Spe / 4 HP)</button>
+							<button class="preset-btn" onclick="applyBulkEvPreset('special')">Special Sweeper (252 SpA / 252 Spe / 4 HP)</button>
+							<button class="preset-btn" onclick="applyBulkEvPreset('bulky')">Bulky Pivot (252 HP / 128 Def / 128 SpD)</button>
+							<button class="preset-btn" onclick="applyBulkEvPreset('reset')">Reset EVs (0 All Stats)</button>
+						</div>
+					</div>
+				</div>
+			</div>
+			
+			<!-- Full Pokédex Directory Sheet Modal -->
+			<div class="modal" id="dex-modal">
+				<div class="modal-content">
+					<div style="display:flex; justify-content:space-between; align-items:center;">
+						<h3 style="color: var(--primary-yellow);">📖 Full Pokédex Directory (Gen 1 - 5)</h3>
+						<button class="action-btn-sm" id="close-dex-btn">Close</button>
+					</div>
+					
+					<div class="dex-filter-bar">
+						<input type="text" id="dex-search-input" class="search-input" placeholder="Search by name or #ID..." style="max-width: 220px;">
+						
+						<select id="dex-gen-filter" style="max-width: 150px;">
+							<option value="all">All Generations</option>
+							<option value="1">Gen 1 (Kanto)</option>
+							<option value="2">Gen 2 (Johto)</option>
+							<option value="3">Gen 3 (Hoenn)</option>
+							<option value="4">Gen 4 (Sinnoh)</option>
+							<option value="5">Gen 5 (Unova)</option>
+						</select>
+						
+						<span id="dex-results-count" style="font-size:0.8rem; color:var(--text-muted); font-weight:600;">Showing 649 Pokémon</span>
+					</div>
+					
+					<div class="dex-grid" id="dex-grid-container"></div>
+				</div>
+			</div>
+			
+			<script src="script.js"></script>
+		</body>
+	</html>
