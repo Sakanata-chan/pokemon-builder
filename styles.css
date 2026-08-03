@@ -631,6 +631,11 @@ header, .dashboard, .control-panel, .grid, .analysis-section {
 	font-style: italic;
 	box-shadow: 0 2px 8px var(--shadow-color);
 	text-align: left;
+
+	/* 🎯 Fix height and add smooth scrolling for longer text */
+	height: 60px;          /* Sets a fixed height */
+	overflow-y: auto;      /* Adds a scrollbar if the text overflows */
+	flex-shrink: 0;        /* Prevents flexbox from shrinking the box */
 }
 
 .type-badge { 
