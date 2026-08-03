@@ -1,25 +1,15 @@
 // --- CONSTANTS & CONFIG ---
 const NATURE_MODIFIERS = {
-  Adamant: { boost: "attack", nerf: "special-attack" },
-  Bold: { boost: "defense", nerf: "attack" },
-  Brave: { boost: "attack", nerf: "speed" },
-  Calm: { boost: "special-defense", nerf: "attack" },
-  Careful: { boost: "special-defense", nerf: "special-attack" },
-  Gentle: { boost: "special-defense", nerf: "defense" },
-  Hasty: { boost: "speed", nerf: "defense" },
-  Impish: { boost: "defense", nerf: "special-attack" },
-  Jolly: { boost: "speed", nerf: "special-attack" },
-  Lax: { boost: "defense", nerf: "special-defense" },
-  Lonely: { boost: "attack", nerf: "defense" },
-  Mild: { boost: "special-attack", nerf: "defense" },
-  Modest: { boost: "special-attack", nerf: "attack" },
-  Naive: { boost: "speed", nerf: "special-defense" },
-  Naughty: { boost: "attack", nerf: "special-defense" },
-  Quiet: { boost: "special-attack", nerf: "speed" },
-  Rash: { boost: "special-attack", nerf: "special-defense" },
-  Relaxed: { boost: "defense", nerf: "speed" },
-  Sassy: { boost: "special-defense", nerf: "speed" },
-  Timid: { boost: "speed", nerf: "attack" }
+  Adamant: { boost: "attack", nerf: "special-attack" }, Bold: { boost: "defense", nerf: "attack" },
+  Brave: { boost: "attack", nerf: "speed" }, Calm: { boost: "special-defense", nerf: "attack" },
+  Careful: { boost: "special-defense", nerf: "special-attack" }, Gentle: { boost: "special-defense", nerf: "defense" },
+  Hasty: { boost: "speed", nerf: "defense" }, Impish: { boost: "defense", nerf: "special-attack" },
+  Jolly: { boost: "speed", nerf: "special-attack" }, Lax: { boost: "defense", nerf: "special-defense" },
+  Lonely: { boost: "attack", nerf: "defense" }, Mild: { boost: "special-attack", nerf: "defense" },
+  Modest: { boost: "special-attack", nerf: "attack" }, Naive: { boost: "speed", nerf: "special-defense" },
+  Naughty: { boost: "attack", nerf: "special-defense" }, Quiet: { boost: "special-attack", nerf: "speed" },
+  Rash: { boost: "special-attack", nerf: "special-defense" }, Relaxed: { boost: "defense", nerf: "speed" },
+  Sassy: { boost: "special-defense", nerf: "speed" }, Timid: { boost: "speed", nerf: "attack" }
 };
 const NATURES = ["Bashful", "Docile", "Hardy", "Quirky", "Serious", ...Object.keys(NATURE_MODIFIERS)];
 
@@ -70,36 +60,27 @@ const TYPE_CHART = {
   dark: { fighting: 0.5, psychic: 2, ghost: 2, dark: 0.5 }
 };
 
-// Gen 1-5 Specific Form Variants
-// Exact, tested PokéAPI form slugs for Gens 1-5
-const GEN_1_5_EXTRA_FORMS = [
-  // Gender differences with actual dedicated form endpoints
-  { id: 592, name: 'frillish-female', displayName: 'Frillish (Female)', gen: 5 },
-  { id: 593, name: 'jellicent-female', displayName: 'Jellicent (Female)', gen: 5 },
-  
-  // Gender differences that use base species name (handled automatically)
-  { id: 521, name: 'unfezant', displayName: 'Unfezant (Female)', gen: 5, forceFemale: true },
-  { id: 449, name: 'hippopotas', displayName: 'Hippopotas (Female)', gen: 4, forceFemale: true },
-  { id: 450, name: 'hippowdon', displayName: 'Hippowdon (Female)', gen: 4, forceFemale: true },
+// PokéAPI base form alias map for edge-case species
+const FORM_MAP = {
+  frillish: 'frillish-male', jellicent: 'jellicent-male', unfezant: 'unfezant-male', meowstic: 'meowstic-male',
+  deoxys: 'deoxys-normal', meloetta: 'meloetta-aria', giratina: 'giratina-altered', shaymin: 'shaymin-land',
+  wormadam: 'wormadam-plant', basculin: 'basculin-red-striped', darmanitan: 'darmanitan-standard',
+  tornadus: 'tornadus-incarnate', thundurus: 'thundurus-incarnate', landorus: 'landorus-incarnate', keldeo: 'keldeo-ordinary'
+};
 
-  // Rotom Forms
+// Alternate forms for Gens 1-5 (Excluding gender duplicates)
+const GEN_1_5_EXTRA_FORMS = [
   { id: 479, name: 'rotom-heat', displayName: 'Rotom (Heat)', gen: 4 },
   { id: 479, name: 'rotom-wash', displayName: 'Rotom (Wash)', gen: 4 },
   { id: 479, name: 'rotom-frost', displayName: 'Rotom (Frost)', gen: 4 },
   { id: 479, name: 'rotom-fan', displayName: 'Rotom (Fan)', gen: 4 },
   { id: 479, name: 'rotom-mow', displayName: 'Rotom (Mow)', gen: 4 },
-
-  // Deoxys Forms (PokéAPI default for Deoxys base is 'deoxys-normal')
   { id: 386, name: 'deoxys-normal', displayName: 'Deoxys (Normal)', gen: 3 },
   { id: 386, name: 'deoxys-attack', displayName: 'Deoxys (Attack)', gen: 3 },
   { id: 386, name: 'deoxys-defense', displayName: 'Deoxys (Defense)', gen: 3 },
   { id: 386, name: 'deoxys-speed', displayName: 'Deoxys (Speed)', gen: 3 },
-
-  // Meloetta Forms (PokéAPI default is 'meloetta-aria')
   { id: 648, name: 'meloetta-aria', displayName: 'Meloetta (Aria)', gen: 5 },
   { id: 648, name: 'meloetta-pirouette', displayName: 'Meloetta (Pirouette)', gen: 5 },
-
-  // Giratina / Shaymin / Wormadam / Basculin / Darmanitan
   { id: 487, name: 'giratina-altered', displayName: 'Giratina (Altered)', gen: 4 },
   { id: 487, name: 'giratina-origin', displayName: 'Giratina (Origin)', gen: 4 },
   { id: 492, name: 'shaymin-land', displayName: 'Shaymin (Land)', gen: 4 },
@@ -111,8 +92,6 @@ const GEN_1_5_EXTRA_FORMS = [
   { id: 550, name: 'basculin-blue-striped', displayName: 'Basculin (Blue-Striped)', gen: 5 },
   { id: 555, name: 'darmanitan-standard', displayName: 'Darmanitan (Standard)', gen: 5 },
   { id: 555, name: 'darmanitan-zen', displayName: 'Darmanitan (Zen)', gen: 5 },
-
-  // Forces / Keldeo / Kyurem
   { id: 641, name: 'tornadus-incarnate', displayName: 'Tornadus (Incarnate)', gen: 5 },
   { id: 641, name: 'tornadus-therian', displayName: 'Tornadus (Therian)', gen: 5 },
   { id: 642, name: 'thundurus-incarnate', displayName: 'Thundurus (Incarnate)', gen: 5 },
@@ -129,13 +108,13 @@ const GEN_1_5_EXTRA_FORMS = [
 // --- STATE & CACHE ---
 const createEmptySlot = () => ({
   pokemon: null, species: null, nickname: "", level: 100, shiny: false, showBack: false, nature: "Hardy",
-  gender: "M", friendship: 255, ability: "", item: "", moves: ["", "", "", ""],
-  spriteStyle: "gen5_anim",
+  gender: "M", friendship: 255, ability: "", item: "", moves: ["", "", "", ""], spriteStyle: "gen5_anim",
   ivs: { hp: 31, attack: 31, defense: 31, 'special-attack': 31, 'special-defense': 31, speed: 31 },
   evs: { hp: 0, attack: 0, defense: 0, 'special-attack': 0, 'special-defense': 0, speed: 0 }
 });
 
-let teamState = Array.from({ length: 6 }, createEmptySlot);
+let maxTeamSlots = 6;
+let teamState = Array.from({ length: maxTeamSlots }, createEmptySlot);
 let speciesIndex = [];
 const moveCache = {}, abilityCache = {};
 
@@ -146,90 +125,51 @@ const fmtName = name => name.replace(/-/g, ' ');
 function refreshUI() {
   const openDrawerIndices = [];
   document.querySelectorAll('.grid .card').forEach((card, idx) => {
-    if (card.classList.contains('drawer-open')) {
-      openDrawerIndices.push(idx);
-    }
+    if (card.classList.contains('drawer-open')) openDrawerIndices.push(idx);
   });
 
   renderTeamSlots();
   renderAnalysis();
 
   openDrawerIndices.forEach(idx => {
-    const card = document.querySelectorAll('.grid .card')[idx];
-    if (card) card.classList.add('drawer-open');
+    document.querySelectorAll('.grid .card')[idx]?.classList.add('drawer-open');
   });
 }
 
 function playCry(url) {
-  if (!url) return;
-  const audio = new Audio(url);
-  audio.volume = 0.5;
-  audio.play().catch(() => {});
+  if (url) new Audio(url).play().catch(() => {});
 }
 
 const SPRITE_VERSIONS = {
-  gen5_anim: "Gen 5 Animated (BW)",
-  showdown: "Showdown 3D Animated",
-  home: "Pokémon HOME 3D",
-  official: "Official Artwork",
-  gen1: "Gen 1 (Yellow)",
-  gen2: "Gen 2 (Crystal)",
-  gen3: "Gen 3 (Emerald)",
-  gen4: "Gen 4 (Platinum)"
+  gen5_anim: "Gen 5 Animated (BW)", showdown: "Showdown 3D Animated", home: "Pokémon HOME 3D",
+  official: "Official Artwork", gen1: "Gen 1 (Yellow)", gen2: "Gen 2 (Crystal)", gen3: "Gen 3 (Emerald)", gen4: "Gen 4 (Platinum)"
 };
 
 function getPokemonSprite(pokemon, isShiny, isFemale, showBack, versionKey = 'gen5_anim') {
   const dir = showBack ? 'back' : 'front';
   const shiny = isShiny ? '_shiny' : '_default';
-  
-  const sprites = pokemon.sprites;
-  const versions = sprites?.versions;
+  const { sprites } = pokemon;
 
-  const resolveGenderSprite = (spriteObj) => {
-    if (!spriteObj) return null;
+  const resolveGenderSprite = (obj) => obj ? (obj[`${dir}${shiny}`] || obj[`${dir}_default`] || obj.front_default) : null;
 
-    if (isFemale) {
-      const femaleKey = `${dir}${shiny}_female`;
-      if (spriteObj[femaleKey]) return spriteObj[femaleKey];
-      if (isShiny && spriteObj[`${dir}_female`]) return spriteObj[`${dir}_female`];
-      const baseFemaleKey = isShiny ? `${dir}_shiny_female` : `${dir}_female`;
-      if (sprites[baseFemaleKey]) return sprites[baseFemaleKey];
-    }
-
-    return spriteObj[`${dir}${shiny}`] || spriteObj[`${dir}_default`] || spriteObj.front_default;
-  };
-
-  if (versionKey === 'showdown') {
-    return resolveGenderSprite(sprites?.other?.showdown) || sprites?.other?.['official-artwork']?.front_default;
+  switch (versionKey) {
+    case 'showdown': return resolveGenderSprite(sprites?.other?.showdown) || sprites?.other?.['official-artwork']?.front_default;
+    case 'home': return isShiny ? (sprites?.other?.home?.front_shiny || sprites?.other?.home?.front_default) : sprites?.other?.home?.front_default;
+    case 'official': return isShiny ? (sprites?.other?.['official-artwork']?.front_shiny || sprites?.other?.['official-artwork']?.front_default) : sprites?.other?.['official-artwork']?.front_default;
+    case 'gen1': return sprites?.versions?.['generation-i']?.['yellow']?.[dir === 'back' ? 'back_default' : 'front_default'] || sprites?.front_default;
+    case 'gen2': return resolveGenderSprite(sprites?.versions?.['generation-ii']?.['crystal']) || sprites?.front_default;
+    case 'gen3': return resolveGenderSprite(sprites?.versions?.['generation-iii']?.['emerald']) || sprites?.front_default;
+    case 'gen4': return resolveGenderSprite(sprites?.versions?.['generation-iv']?.['platinum']) || sprites?.front_default;
+    default: return resolveGenderSprite(sprites?.versions?.['generation-v']?.['black-white']?.animated) || resolveGenderSprite(sprites) || sprites?.other?.['official-artwork']?.front_default;
   }
-  if (versionKey === 'home') {
-    const home = sprites?.other?.home;
-    if (isFemale && home?.front_female) return home.front_female;
-    return isShiny ? (home?.front_shiny || home?.front_default) : home?.front_default;
-  }
-  if (versionKey === 'official') {
-    const off = sprites?.other?.['official-artwork'];
-    return isShiny ? (off?.front_shiny || off?.front_default) : off?.front_default;
-  }
-  if (versionKey === 'gen1') {
-    return versions?.['generation-i']?.['yellow']?.[dir === 'back' ? 'back_default' : 'front_default'] || sprites?.front_default;
-  }
-  if (versionKey === 'gen2') {
-    return resolveGenderSprite(versions?.['generation-ii']?.['crystal']) || sprites?.front_default;
-  }
-  if (versionKey === 'gen3') {
-    return resolveGenderSprite(versions?.['generation-iii']?.['emerald']) || sprites?.front_default;
-  }
-  if (versionKey === 'gen4') {
-    return resolveGenderSprite(versions?.['generation-iv']?.['platinum']) || sprites?.front_default;
-  }
-
-  const g5 = versions?.['generation-v']?.['black-white']?.animated;
-  return resolveGenderSprite(g5) || resolveGenderSprite(sprites) || sprites?.other?.['official-artwork']?.front_default;
 }
 
+// ✅ Replace calculateStat() with this:
 function calculateStat(base, iv, ev, level, statKey, nature) {
-  if (statKey === 'hp') return base === 1 ? 1 : Math.floor(((2 * base + iv + Math.floor(ev / 4)) * level) / 100) + level + 10;
+  if (statKey === 'hp') {
+    const val = base === 1 ? 1 : Math.floor(((2 * base + iv + Math.floor(ev / 4)) * level) / 100) + level + 10;
+    return { value: val, multiplier: 1.0 };
+  }
   const raw = Math.floor(((2 * base + iv + Math.floor(ev / 4)) * level) / 100) + 5;
   const mod = NATURE_MODIFIERS[nature];
   const mult = mod?.boost === statKey ? 1.1 : mod?.nerf === statKey ? 0.9 : 1.0;
@@ -289,9 +229,8 @@ function renderTeamSlots() {
         </div>`;
     } else {
       const { pokemon, species, shiny: isShiny, gender, showBack } = slot;
-      const rawName = pokemon.name.replace(/-female$/i, '').replace(/-male$/i, '');
-      const speciesName = fmtName(rawName);
-      const displayName = slot.nickname ? slot.nickname : speciesName;
+      const speciesName = fmtName(pokemon.name.replace(/-(female|male)$/i, ''));
+      const displayName = slot.nickname || speciesName;
       const isFemale = gender === 'F';
       const spriteUrl = getPokemonSprite(pokemon, isShiny, isFemale, showBack, slot.spriteStyle || 'gen5_anim');
       const cryUrl = pokemon.cries?.latest || pokemon.cries?.legacy;
@@ -304,17 +243,19 @@ function renderTeamSlots() {
       const natureDesc = getNatureDetails(slot.nature);
       const activeAbility = abilityCache[slot.ability];
 
-      const calculatedStats = STAT_NAMES.map(s => {
-        const base = pokemon.stats.find(p => p.stat.name === s.key)?.base_stat || 0;
-        const res = calculateStat(base, slot.ivs[s.key] ?? 31, slot.evs[s.key] ?? 0, slot.level, s.key, slot.nature);
-        return { ...s, base, val: typeof res === 'object' ? res.value : res, mult: res.multiplier || 1.0 };
-      });
+// ✅ Update the calculatedStats block inside renderTeamSlots():
+const calculatedStats = STAT_NAMES.map(s => {
+  const base = pokemon.stats.find(p => p.stat.name === s.key)?.base_stat || 0;
+  const res = calculateStat(base, slot.ivs[s.key] ?? 31, slot.evs[s.key] ?? 0, slot.level, s.key, slot.nature);
+  const val = typeof res === 'object' ? res.value : res;
+  return { ...s, base, val, mult: res.multiplier || 1.0 };
+});
 
       slotWrapper.innerHTML = `
         <div class="slot-top-bar">
           <div style="display:flex; align-items:center; gap:4px;">
             ${index > 0 ? `<button class="bar-btn-tag" onclick="moveSlot(${index}, -1)" title="Move Left">◄</button>` : ''}
-            ${index < 5 ? `<button class="bar-btn-tag" onclick="moveSlot(${index}, 1)" title="Move Right">►</button>` : ''}
+            ${index < teamState.length - 1 ? `<button class="bar-btn-tag" onclick="moveSlot(${index}, 1)" title="Move Right">►</button>` : ''}
             ${isLead ? `<span class="leader-badge">👑</span>` : `<span class="card-id">#${String(species.id).padStart(4, '0')}</span>`}
           </div>
           <div style="display:flex; gap:4px; align-items:center;">
@@ -340,7 +281,13 @@ function renderTeamSlots() {
             ${pokemon.types.map(t => `<span class="type-badge ${t.type.name}">${t.type.name}</span>`).join('')}
           </div>
           
-          <div class="sprite-container"><img src="${spriteUrl}" alt="${pokemon.name}"></div>
+		<div class="sprite-container">
+            <img src="${spriteUrl}" alt="${pokemon.name}">
+            <div class="dex-tooltip">
+              <span class="dex-tooltip-title">📖 Gen 5 Pokédex</span>
+              <p class="dex-tooltip-desc">"${slot.flavorText || 'No Pokédex description available.'}"</p>
+            </div>
+          </div>
 
           <div class="meta-badges-container">
             <div class="pill-badge pill-nature" title="${natureDesc}">${slot.nature}</div>
@@ -352,18 +299,14 @@ function renderTeamSlots() {
           <div class="moveset-card">
             ${slot.moves.map(mName => {
               const move = moveCache[mName];
-              if (!move || !mName) {
-                return `
-                  <div class="move-slot empty" title="Empty Move Slot">
-                    <span class="move-empty-txt">— Empty Move —</span>
-                  </div>`;
-              }
-              const categoryIcon = move.damageClass === 'physical' ? '💥' : move.damageClass === 'special' ? '🔮' : '🛡️';
+              if (!move || !mName) return `<div class="move-slot empty" title="Empty Move Slot"><span class="move-empty-txt">— Empty Move —</span></div>`;
+              
+              const catIcon = move.damageClass === 'physical' ? '💥' : move.damageClass === 'special' ? '🔮' : '🛡️';
               const moveTooltip = `${fmtName(move.name).toUpperCase()} (${move.type.toUpperCase()})\n• Class: ${move.damageClass.toUpperCase()}\n• Power: ${move.power} | Acc: ${move.accuracy} | PP: ${move.pp}\n• Effect: ${move.desc}`;
               return `
                 <div class="move-slot" title="${moveTooltip}">
                   <div class="move-type-pill ${move.type}">
-                    <span class="move-cat-icon">${categoryIcon}</span>
+                    <span class="move-cat-icon">${catIcon}</span>
                     <span class="move-type-lbl">${move.type.slice(0, 3)}</span>
                   </div>
                   <div class="move-main-info">
@@ -398,7 +341,6 @@ function renderTeamSlots() {
             </div>
           </div>
 
-          <!-- Slide-up Edit Drawer -->
           <div class="controls-drawer" id="drawer-${index}">
             <div class="drawer-header">
               <span class="drawer-title">Edit ${fmtName(pokemon.name)}</span>
@@ -499,38 +441,14 @@ function toggleDrawer(index) {
 }
 
 async function updateSlot(index, field, value) {
-  const slot = teamState[index];
-  slot[field] = value;
-
-  if (field === 'gender' && slot.species) {
-    const isFemale = value === 'F';
-    const baseSlug = slot.species.name;
-    const femaleFormSlug = `${baseSlug}-female`;
-
-    if (isFemale) {
-      try {
-        const femalePokemon = await fetch(`https://pokeapi.co/api/v2/pokemon/${femaleFormSlug}`).then(r => r.ok ? r.json() : null);
-        if (femalePokemon) slot.pokemon = femalePokemon;
-      } catch (e) {}
-    } else if (!isFemale && slot.pokemon.name.endsWith('-female')) {
-      try {
-        const basePokemon = await fetch(`https://pokeapi.co/api/v2/pokemon/${baseSlug}`).then(r => r.json());
-        if (basePokemon) slot.pokemon = basePokemon;
-      } catch (e) {}
-    }
-  }
-
+  teamState[index][field] = value;
   refreshUI();
 }
 
 function moveSlot(fromIndex, direction) {
   const toIndex = fromIndex + direction;
-  if (toIndex < 0 || toIndex >= teamState.length) return;
-
-  const temp = teamState[fromIndex];
-  teamState[fromIndex] = teamState[toIndex];
-  teamState[toIndex] = temp;
-
+  if (toIndex < 0 || toIndex >= teamState.length) return; // Works with dynamic array lengths
+  [teamState[fromIndex], teamState[toIndex]] = [teamState[toIndex], teamState[fromIndex]];
   refreshUI();
 }
 
@@ -552,11 +470,37 @@ function applyBulkField(field, value) {
 }
 
 function applyBulkIvPreset(presetType) {
+  const isTrickRoom = presetType === 'trickroom';
   teamState.forEach(slot => {
-    if (slot.pokemon) slot.ivs = presetType === 'trickroom' ? { hp: 31, attack: 31, defense: 31, 'special-attack': 31, 'special-defense': 31, speed: 0 } 
-                                                          : { hp: 31, attack: 31, defense: 31, 'special-attack': 31, 'special-defense': 31, speed: 31 };
+    if (slot.pokemon) slot.ivs = { hp: 31, attack: 31, defense: 31, 'special-attack': 31, 'special-defense': 31, speed: isTrickRoom ? 0 : 31 };
   });
   renderTeamSlots();
+}
+
+function setTeamSize(newSize) {
+  maxTeamSlots = parseInt(newSize, 10);
+  
+  if (teamState.length < maxTeamSlots) {
+    // Expand team capacity
+    while (teamState.length < maxTeamSlots) {
+      teamState.push(createEmptySlot());
+    }
+  } else if (teamState.length > maxTeamSlots) {
+    // Check if slots being removed contain active Pokémon
+    const slotsToRemove = teamState.slice(maxTeamSlots);
+    const hasActivePokemon = slotsToRemove.some(slot => slot.pokemon !== null);
+
+    if (hasActivePokemon) {
+      if (!confirm(`Shrinking team size to ${maxTeamSlots} will delete Pokémon in slot(s) ${maxTeamSlots + 1}–${teamState.length}. Continue?`)) {
+        // Reset select dropdown value back to current length if cancelled
+        document.getElementById('max-slots-select').value = teamState.length;
+        return;
+      }
+    }
+    teamState = teamState.slice(0, maxTeamSlots);
+  }
+
+  refreshUI();
 }
 
 function applyBulkEvPreset(presetType) {
@@ -584,63 +528,46 @@ async function handleMoveSelect(slotIdx, moveIdx, moveName) {
 
 async function selectPokemon(index, name) {
   try {
-    let apiKey = name.toLowerCase().trim().replace(/ /g, '-');
-    
-    // Check if this entry requires forcing female gender state
-    const formMeta = speciesIndex.find(s => s.name === apiKey);
-    const forceFemale = formMeta?.forceFemale || apiKey.endsWith('-female');
+    const cleanName = name.toLowerCase().trim().replace(/ (female|male)/g, '');
+    const apiKey = cleanName.replace(/ /g, '-');
 
-    let pokemon = null;
-
-    // 1. Try fetching exact slug first
-    let res = await fetch(`https://pokeapi.co/api/v2/pokemon/${apiKey}`);
-    
-    // 2. Fallback: Default form mappings if standard name fails (e.g., 'deoxys' -> 'deoxys-normal')
+    let res = await fetch(`https://pokeapi.co/api/v2/pokemon/${FORM_MAP[apiKey] || apiKey}`);
     if (!res.ok) {
       const baseSlug = apiKey.split('-')[0];
-      const FORM_MAP = {
-        deoxys: 'deoxys-normal',
-        meloetta: 'meloetta-aria',
-        giratina: 'giratina-altered',
-        shaymin: 'shaymin-land',
-        wormadam: 'wormadam-plant',
-        basculin: 'basculin-red-striped',
-        darmanitan: 'darmanitan-standard',
-        tornadus: 'tornadus-incarnate',
-        thundurus: 'thundurus-incarnate',
-        landorus: 'landorus-incarnate',
-        keldeo: 'keldeo-ordinary'
-      };
-
-      const fallbackSlug = FORM_MAP[baseSlug] || baseSlug;
-      res = await fetch(`https://pokeapi.co/api/v2/pokemon/${fallbackSlug}`);
+      res = await fetch(`https://pokeapi.co/api/v2/pokemon/${FORM_MAP[baseSlug] || baseSlug}`);
     }
 
     if (!res.ok) throw new Error(`API fetch failed for ${apiKey}`);
-    pokemon = await res.json();
+    const pokemon = await res.json();
 
-    // 3. Fetch base species endpoint using the root species name
     const speciesSlug = pokemon.species?.name || apiKey.split('-')[0];
-    const species = await fetch(`https://pokeapi.co/api/v2/pokemon-species/${speciesSlug}`)
-      .then(r => r.ok ? r.json() : null);
+    const species = await fetch(`https://pokeapi.co/api/v2/pokemon-species/${speciesSlug}`).then(r => r.ok ? r.json() : null);
+	
+	// --- ADD THIS BLOCK TO GET GEN 5 FLAVOR TEXT ---
+	let flavorText = "No Pokédex description available.";
+	if (species && species.flavor_text_entries) {
+		// Find Gen 5 entry (black-white or black-2-white-2) in English
+		const gen5Entry = species.flavor_text_entries.find(f => 
+			f.language.name === 'en' && 
+			(f.version.name === 'black' || f.version.name === 'white' || f.version.name === 'black-2-white-2')
+		) || species.flavor_text_entries.find(f => f.language.name === 'en'); // Fallback to any English text
 
-    // 4. Set Gender
-    let defaultGender = 'M';
-    if (forceFemale) {
-      defaultGender = 'F';
-    } else if (species) {
-      defaultGender = species.gender_rate === -1 ? 'N' : species.gender_rate === 8 ? 'F' : 'M';
-    }
+		if (gen5Entry) {
+			flavorText = gen5Entry.flavor_text.replace(/[\r\n\f]/g, ' ');
+		}
+	}
 
+    const defaultGender = species ? (species.gender_rate === -1 ? 'N' : species.gender_rate === 8 ? 'F' : 'M') : 'M';
     const defaultAbility = pokemon.abilities[0]?.ability.name || "";
-    
+
     teamState[index] = {
       ...createEmptySlot(),
       pokemon,
       species: species || { id: pokemon.id, gender_rate: -1, base_happiness: 70 },
       gender: defaultGender,
       friendship: species?.base_happiness ?? 70,
-      ability: defaultAbility
+      ability: defaultAbility,
+	  flavorText: flavorText // Store description in slot state
     };
 
     if (defaultAbility) await fetchAbilityDetails(defaultAbility);
@@ -659,7 +586,7 @@ function removePokemon(index) {
 
 function updateDashboard() {
   const active = teamState.filter(s => s.pokemon !== null);
-  document.getElementById('team-counter').textContent = `${active.length} / 6`;
+  document.getElementById('team-counter').textContent = `${active.length} / ${teamState.length}`;
   document.getElementById('shiny-counter').textContent = active.filter(s => s.shiny).length;
   document.getElementById('avg-level-counter').textContent = active.length ? `Lv. ${Math.round(active.reduce((a, c) => a + c.level, 0) / active.length)}` : '--';
 }
@@ -772,20 +699,11 @@ async function exportSlotAsImage(index) {
   const slotNode = document.querySelectorAll('.grid .slot-wrapper')[index];
   if (!slotNode || !teamState[index].pokemon) return;
 
-  const pokemonName = teamState[index].pokemon.name;
-
   try {
-    const cardElement = slotNode.querySelector('.card');
-    const canvas = await html2canvas(cardElement, {
-      backgroundColor: null,
-      scale: 2,
-      useCORS: true
-    });
-
-    const image = canvas.toDataURL("image/png");
+    const canvas = await html2canvas(slotNode.querySelector('.card'), { backgroundColor: null, scale: 2, useCORS: true });
     const link = document.createElement("a");
-    link.href = image;
-    link.download = `${pokemonName}-card.png`;
+    link.href = canvas.toDataURL("image/png");
+    link.download = `${teamState[index].pokemon.name}-card.png`;
     link.click();
   } catch (err) {
     console.error("Failed to render card image:", err);
@@ -798,28 +716,21 @@ async function loadTeamCache(team) {
   team.forEach(slot => {
     if (!slot.pokemon) return;
     if (slot.ability) promises.push(fetchAbilityDetails(slot.ability));
-    slot.moves.forEach(moveName => {
-      if (moveName) promises.push(fetchMoveDetails(moveName));
-    });
+    slot.moves.forEach(m => { if (m) promises.push(fetchMoveDetails(m)); });
   });
   await Promise.all(promises);
 }
 
 function saveTeamToLocalStorage() {
-  const existingSave = localStorage.getItem('pokemon_team_builder_save');
-  if (existingSave) {
-    const confirmOverwrite = confirm("A saved team already exists in browser storage. Do you want to overwrite it?");
-    if (!confirmOverwrite) return;
+  if (localStorage.getItem('pokemon_team_builder_save')) {
+    if (!confirm("A saved team already exists in browser storage. Overwrite?")) return;
   }
   localStorage.setItem('pokemon_team_builder_save', JSON.stringify(teamState));
 }
 
 async function loadTeamFromLocalStorage() {
   const saved = localStorage.getItem('pokemon_team_builder_save');
-  if (!saved) {
-    alert('No saved team found in browser storage.');
-    return;
-  }
+  if (!saved) return alert('No saved team found in browser storage.');
   try {
     teamState = JSON.parse(saved);
     await loadTeamCache(teamState);
@@ -831,11 +742,9 @@ async function loadTeamFromLocalStorage() {
 }
 
 function exportTeamJSON() {
-  const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(teamState, null, 2));
   const dlAnchor = document.createElement('a');
-  dlAnchor.setAttribute("href", dataStr);
+  dlAnchor.setAttribute("href", "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(teamState, null, 2)));
   dlAnchor.setAttribute("download", "pokemon_team.json");
-  document.body.appendChild(dlAnchor);
   dlAnchor.click();
   dlAnchor.remove();
 }
@@ -848,18 +757,50 @@ function importTeamJSON(event) {
   reader.onload = async (e) => {
     try {
       const importedState = JSON.parse(e.target.result);
-      if (Array.isArray(importedState) && importedState.length === 6) {
+      if (Array.isArray(importedState) && importedState.length >= 1 && importedState.length <= 10) {
         teamState = importedState;
+        maxTeamSlots = teamState.length;
+        const select = document.getElementById('max-slots-select');
+        if (select) select.value = maxTeamSlots;
+        
         await loadTeamCache(teamState);
         refreshUI();
-      } else {
-        alert('Invalid JSON structure. Must be a 6-slot team configuration.');
-      }
-    } catch (err) {
-      alert('Error parsing JSON file.');
-    }
+      } else alert('Invalid JSON structure. Team size must be between 1 and 10.');
+    } catch { alert('Error parsing JSON file.'); }
   };
   reader.readAsText(file);
+}
+
+function toggleHeaderDeck() {
+  const deck = document.getElementById('header-deck');
+  const icon = document.getElementById('deck-toggle-icon');
+  const text = document.getElementById('deck-toggle-text');
+  
+  const isCollapsed = deck.classList.toggle('collapsed');
+  
+  if (isCollapsed) {
+    icon.textContent = '👁️‍🗨️';
+    text.textContent = 'Unhide Panel';
+  } else {
+    icon.textContent = '👁️';
+    text.textContent = 'Hide Panel';
+  }
+}
+
+function toggleDefenseDeck() {
+  const deck = document.getElementById('defense-deck');
+  const icon = document.getElementById('defense-toggle-icon');
+  const text = document.getElementById('defense-toggle-text');
+  
+  const isCollapsed = deck.classList.toggle('collapsed');
+  
+  if (isCollapsed) {
+    icon.textContent = '👁️‍🗨️';
+    text.textContent = 'Unhide Matrix';
+  } else {
+    icon.textContent = '👁️';
+    text.textContent = 'Hide Matrix';
+  }
 }
 
 // --- INIT & GLOBAL EVENT LISTENERS ---
@@ -868,20 +809,10 @@ async function init() {
   if (batchNatureSelect) batchNatureSelect.innerHTML = NATURES.map(n => `<option value="${n}">${n}</option>`).join('');
 
   try {
-    // 1. Fetch exactly Gen 1-5 base species (#1 to #649) in 1 single clean request
     const data = await fetch('https://pokeapi.co/api/v2/pokemon-species?limit=649').then(r => r.json());
-    
-    const baseList = data.results.map((item, idx) => {
-      const id = idx + 1;
-      return { id, name: item.name, displayName: fmtName(item.name), gen: getGen(id) };
-    });
-
-    // 2. Combine base species with Gen 1-5 specific extra forms
+    const baseList = data.results.map((item, idx) => ({ id: idx + 1, name: item.name, displayName: fmtName(item.name), gen: getGen(idx + 1) }));
     speciesIndex = [...baseList, ...GEN_1_5_EXTRA_FORMS];
-
-  } catch (e) { 
-    console.error("Index load failed", e); 
-  }
+  } catch (e) { console.error("Index load failed", e); }
   refreshUI();
 }
 
@@ -897,11 +828,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let exportText = "";
     teamState.forEach(slot => {
       if (!slot.pokemon) return;
-      const genderStr = slot.gender === 'F' ? ' (F)' : slot.gender === 'M' ? ' (M)' : '';
       const speciesName = fmtName(slot.pokemon.name);
-      const nameStr = slot.nickname ? `${slot.nickname} (${speciesName})` : speciesName;
-
-      exportText += `${nameStr}${genderStr} ${slot.item ? `@ ${slot.item}` : ''}\n`;
+      exportText += `${slot.nickname ? `${slot.nickname} (${speciesName})` : speciesName}${slot.gender === 'F' ? ' (F)' : slot.gender === 'M' ? ' (M)' : ''} ${slot.item ? `@ ${slot.item}` : ''}\n`;
       exportText += `Ability: ${slot.ability}\nLevel: ${slot.level}\n`;
       if (slot.shiny) exportText += `Shiny: Yes\n`;
       if (slot.friendship !== 255) exportText += `Happiness: ${slot.friendship}\n`;
@@ -921,12 +849,20 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('export-modal').style.display = 'flex';
   });
 
-  document.getElementById('close-slot-modal-btn').addEventListener('click', () => {
-    document.getElementById('slot-select-modal').style.display = 'none';
+  document.getElementById('close-slot-modal-btn').addEventListener('click', () => document.getElementById('slot-select-modal').style.display = 'none');
+  document.getElementById('close-modal-btn').addEventListener('click', () => document.getElementById('export-modal').style.display = 'none');
+
+  // --- UPDATED CLEAR BUTTON ---
+  document.getElementById('clear-btn').addEventListener('click', () => { 
+    teamState = Array.from({ length: maxTeamSlots }, createEmptySlot); 
+    refreshUI(); 
   });
 
-  document.getElementById('close-modal-btn').addEventListener('click', () => document.getElementById('export-modal').style.display = 'none');
-  document.getElementById('clear-btn').addEventListener('click', () => { teamState = Array.from({ length: 6 }, createEmptySlot); refreshUI(); });
+  // --- NEW TEAM SIZE SELECTOR LISTENER ---
+  const slotSelect = document.getElementById('max-slots-select');
+  if (slotSelect) {
+    slotSelect.addEventListener('change', (e) => setTeamSize(e.target.value));
+  }
 
   document.getElementById('save-team-btn').addEventListener('click', saveTeamToLocalStorage);
   document.getElementById('load-team-btn').addEventListener('click', loadTeamFromLocalStorage);
