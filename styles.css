@@ -642,3 +642,26 @@ header, .dashboard, .control-panel, .grid, .analysis-section {
     color: #fff; 
     cursor: help; /* 👈 Add this */
 }
+
+/* --- Drag and Drop Feedback Styles --- */
+.slot-wrapper {
+    cursor: grab;
+    transition: transform 0.15s ease, opacity 0.15s ease, border-color 0.15s ease;
+}
+
+.slot-wrapper:active {
+    cursor: grabbing;
+}
+
+/* Card actively being dragged */
+.slot-wrapper.is-dragging {
+    opacity: 0.4;
+    transform: scale(0.96);
+}
+
+/* Slot wrapper target area when hovering over it with a dragged item */
+.slot-wrapper.drag-over .card {
+    border-color: var(--primary-yellow) !important;
+    box-shadow: 0 0 16px rgba(255, 203, 5, 0.4);
+    transform: scale(1.02);
+}
