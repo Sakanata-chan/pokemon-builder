@@ -137,6 +137,27 @@
 			</div>
 		</div>
 		
+		<!-- Offensive Coverage Matrix (Collapsible Deck) -->
+		<div class="deck-container" id="offense-deck">
+			<div class="deck-header">
+				<div class="deck-title">
+					<span>⚔️ Team Offensive Coverage Matrix</span>
+				</div>
+				<button class="action-btn-sm toggle-deck-btn" id="toggle-offense-btn" onclick="toggleOffenseDeck()">
+					<span id="offense-toggle-icon">👁️</span> <span id="offense-toggle-text">Hide Matrix</span>
+				</button>
+			</div>
+			
+			<div class="deck-body" id="offense-deck-body">
+				<div class="analysis-grid" id="offense-type-matrix"></div>
+				<div class="matrix-legend">
+					<span class="legend-item"><span class="type-lbl-demo">TYPE</span> = Target Defender Type</span>
+					<span class="legend-item"><b style="color:#78c850;">⚔️ X</b> = Moves that hit Super-Effective (2x+)</span>
+					<span class="legend-item"><b style="color:#ff4d4d;">⚠️ Blind Spot</b> = 0 Super-Effective moves on your team</span>
+				</div>
+			</div>
+		</div>
+		
 		<!-- Showdown Export Modal -->
 		<div class="modal" id="export-modal">
 			<div class="modal-content" style="max-width: 600px;">
@@ -231,7 +252,28 @@
 			</div>
 		</div>
 		
+		<!-- Searchable Move Selection Modal -->
+		<div class="modal" id="move-picker-modal">
+			<div class="modal-content" style="max-width: 550px;">
+				<div style="display:flex; justify-content:space-between; align-items:center;">
+					<h3 style="color: var(--primary-yellow);" id="move-picker-title">Select Move</h3>
+					<button class="action-btn-sm" id="close-move-picker-btn">Close</button>
+				</div>
+				
+				<div class="dex-filter-bar" style="margin-top: 6px;">
+					<input type="text" id="move-search-input" class="search-input" placeholder="Search move name..." style="flex: 1;">
+					<select id="move-type-filter" style="max-width: 140px;">
+						<option value="all">All Types</option>
+						<!-- Dynamically populated -->
+					</select>
+				</div>
+				
+				<div id="move-picker-list" style="display:flex; flex-direction:column; gap:6px; max-height:360px; overflow-y:auto; margin-top:10px; padding-right:4px;">
+					<!-- Move choices populated dynamically -->
+				</div>
+			</div>
+		</div>
+		
 		<script src="script.js"></script>
 	</body>
 </html>
-
