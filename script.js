@@ -145,6 +145,47 @@ const SPRITE_VERSIONS = {
 	official: "Official Artwork", gen1: "Gen 1 (Yellow)", gen2: "Gen 2 (Crystal)", gen3: "Gen 3 (Emerald)", gen4: "Gen 4 (Platinum)"
 };
 
+function getTypeEffectivenessDetails(type, dualTypes) {
+    const weakTo = [], resistsTo = [], immuneTo = [];
+    const superEffectiveVs = [], notVeryEffectiveVs = [], noEffectVs = [];
+	
+    // --- 1. DEFENSIVE: Taking Damage ---
+    ALL_TYPES.forEach(atkType => {
+        let mult = 1.0;
+        dualTypes.forEach(defType => {
+            if (TYPE_CHART[atkType]?.[defType] !== undefined) {
+                mult *= TYPE_CHART[atkType][defType];
+			}
+		});
+        if (mult > 1.0) weakTo.push(`${fmtName(atkType)} (${mult}x)`);
+        else if (mult === 0) immuneTo.push(fmtName(atkType));
+        else if (mult < 1.0) resistsTo.push(`${fmtName(atkType)} (${mult}x)`);
+	});
+	
+    // --- 2. OFFENSIVE: Dealing Damage (STAB for this type) ---
+    ALL_TYPES.forEach(defType => {
+        const mult = TYPE_CHART[type]?.[defType] ?? 1.0;
+        if (mult > 1.0) superEffectiveVs.push(fmtName(defType));
+        else if (mult === 0) noEffectVs.push(fmtName(defType));
+        else if (mult < 1.0) notVeryEffectiveVs.push(fmtName(defType));
+	});
+	
+    // --- 3. BUILD TOOLTIP TEXT ---
+    let text = `=== ${type.toUpperCase()} TYPE MATCHUPS ===\n\n`;
+	
+    text += `🛡️ DEFENSIVE (Taking Damage as ${dualTypes.map(fmtName).join('/')}):\n`;
+    text += `• Weak to: ${weakTo.length ? weakTo.join(', ') : 'None'}\n`;
+    text += `• Resists: ${resistsTo.length ? resistsTo.join(', ') : 'None'}\n`;
+    text += `• Immune to: ${immuneTo.length ? immuneTo.join(', ') : 'None'}\n\n`;
+	
+    text += `⚔️ OFFENSIVE (Attacking with ${type.toUpperCase()} STAB):\n`;
+    text += `• Super-effective (2x) vs: ${superEffectiveVs.length ? superEffectiveVs.join(', ') : 'None'}\n`;
+    text += `• Not very effective (0.5x) vs: ${notVeryEffectiveVs.length ? notVeryEffectiveVs.join(', ') : 'None'}\n`;
+    text += `• No effect (0x) vs: ${noEffectVs.length ? noEffectVs.join(', ') : 'None'}`;
+	
+    return text;
+}
+
 function getPokemonSprite(pokemon, isShiny, isFemale, showBack, versionKey = 'gen5_anim') {
 	const dir = showBack ? 'back' : 'front';
 	const shiny = isShiny ? '_shiny' : '_default';
@@ -284,7 +325,11 @@ function renderTeamSlots() {
 			
 			<div class="types">
             <span class="header-gen-badge">Gen ${getGen(species.id)}</span>
-            ${pokemon.types.map(t => `<span class="type-badge ${t.type.name}">${t.type.name}</span>`).join('')}
+			${pokemon.types.map(t => {
+				const pokeTypes = pokemon.types.map(pt => pt.type.name);
+				const tooltip = getTypeEffectivenessDetails(t.type.name, pokeTypes);
+				return `<span class="type-badge ${t.type.name}" title="${tooltip}">${t.type.name}</span>`;
+			}).join('')}
 			</div>
 			
 			<!-- Pokémon Sprite -->
