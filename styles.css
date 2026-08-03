@@ -30,12 +30,47 @@ h1 { color: var(--primary-yellow); font-size: 2.2rem; }
 .dash-value { font-size: 1.15rem; font-weight: bold; color: var(--primary-yellow); }
 
 /* Reorganized Control Panel Below Dashboard */
+/* Control Panel Layout Fix */
 .control-panel {
-  display: flex; flex-wrap: wrap; gap: 16px; justify-content: space-between; align-items: flex-end;
-  background-color: var(--dash-bg); border: 1px solid var(--control-border); border-radius: 12px;
-  padding: 12px 16px; margin-bottom: 24px; width: 100%; max-width: 950px; box-shadow: 0 4px 12px var(--shadow-color);
+  display: flex; 
+  flex-direction: row; /* Force horizontally aligned groups */
+  flex-wrap: wrap; 
+  gap: 16px; 
+  justify-content: space-around; /* Distribute groups evenly across width */
+  align-items: flex-start;
+  background-color: var(--dash-bg); 
+  border: 1px solid var(--control-border); 
+  border-radius: 12px;
+  padding: 14px 16px; 
+  margin-bottom: 24px; 
+  width: 100%; 
+  max-width: 950px; 
+  box-shadow: 0 4px 12px var(--shadow-color);
 }
-.panel-group { display: flex; flex-direction: column; gap: 6px; }
+
+.panel-group { 
+  display: flex; 
+  flex-direction: column; 
+  align-items: center; /* Center labels over their button groups */
+  gap: 6px; 
+}
+
+#max-slots-select {
+  height: 31px;
+  padding: 4px 8px;
+  background-color: var(--control-bg);
+  color: var(--text-color);
+  border: 1px solid var(--control-border);
+  border-radius: 6px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+#max-slots-select:hover {
+  border-color: var(--primary-yellow);
+  color: var(--primary-yellow);
+}
+
 .group-label { font-size: 0.68rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
 .group-buttons { display: flex; gap: 6px; flex-wrap: wrap; }
 
@@ -48,11 +83,15 @@ h1 { color: var(--primary-yellow); font-size: 2.2rem; }
 .action-btn-sm.btn-danger { color: #e91e63; border-color: rgba(233, 30, 99, 0.4); }
 .action-btn-sm.btn-danger:hover { background-color: #e91e63; color: #fff; }
 
-/* Slot Grid */
-.grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; width: 100%; max-width: 950px; margin-bottom: 25px; }
-@media (max-width: 850px) { .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-@media (max-width: 580px) { .grid { grid-template-columns: repeat(1, minmax(0, 1fr)); } }
-
+/* Flexible Slot Grid */
+.grid { 
+  display: grid; 
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); 
+  gap: 20px; 
+  width: 100%; 
+  max-width: 950px; 
+  margin-bottom: 25px; 
+}
 .slot-wrapper { display: flex; flex-direction: column; gap: 6px; width: 100%; position: relative; }
 
 /* Slot Control Bar */
@@ -120,7 +159,6 @@ h1 { color: var(--primary-yellow); font-size: 2.2rem; }
 .types { display: flex; gap: 4px; margin-top: 3px; margin-bottom: 2px; justify-content: center; }
 .type-badge { padding: 2px 6px; border-radius: 4px; font-size: 0.65rem; text-transform: uppercase; font-weight: bold; color: #fff; }
 
-.sprite-container { height: 130px; width: 100%; display: flex; align-items: center; justify-content: center; margin: 6px 0; z-index: 2; cursor: pointer; }
 .card img { max-width: 75px; max-height: 75px; object-fit: contain; image-rendering: pixelated; transform: scale(2); transition: transform 0.2s ease-in-out; }
 .card img:hover { transform: scale(2.25); }
 
@@ -290,7 +328,13 @@ select, input[type="number"] { width: 100%; padding: 5px 7px; font-size: 0.8rem;
 /* Analysis Matrix */
 .analysis-section { width: 100%; max-width: 950px; background-color: var(--dash-bg); border: 1px solid var(--control-border); border-radius: 12px; padding: 16px; box-shadow: 0 4px 12px var(--shadow-color); margin-bottom: 30px; }
 .analysis-title { font-size: 0.95rem; font-weight: bold; color: var(--primary-yellow); margin-bottom: 12px; border-bottom: 1px solid var(--control-border); padding-bottom: 6px; }
-.analysis-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(65px, 1fr)); gap: 8px; text-align: center; }
+.analysis-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(65px, 1fr));
+  gap: 8px;
+  text-align: center;
+  width: 100%;
+}
 .analysis-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 6px; padding: 6px 4px; display: flex; flex-direction: column; gap: 4px; align-items: center; }
 .analysis-count { font-size: 0.8rem; font-weight: bold; }
 .count-weak { color: #ff4d4d; } .count-resist { color: #78c850; } .count-immune { color: #00e5ff; }
@@ -332,6 +376,9 @@ textarea { width: 100%; height: 200px; background: var(--select-bg); color: var(
   grid-template-columns: repeat(2, 1fr);
   gap: 10px;
   margin-top: 8px;
+  max-height: 320px; /* Keeps modal neat with up to 10 slots */
+  overflow-y: auto;
+  padding-right: 4px;
 }
 
 .slot-picker-card {
@@ -385,4 +432,247 @@ textarea { width: 100%; height: 200px; background: var(--select-bg); color: var(
 .slot-picker-status {
   font-size: 0.68rem;
   color: var(--text-muted);
+}
+
+/* Ensure main content wrappers stay aligned */
+header, .dashboard, .control-panel, .grid, .analysis-section {
+  width: 100%;
+  max-width: 950px;
+}
+
+/* Fix flexwrap gaps on small screens */
+.control-panel {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  justify-content: space-around;
+  align-items: flex-start;
+  background-color: var(--dash-bg);
+  border: 1px solid var(--control-border);
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-bottom: 24px;
+  box-shadow: 0 4px 12px var(--shadow-color);
+}
+
+/* Ensure modal overlays align centrally with full height scroll bounds */
+.modal-content {
+  margin: auto;
+  box-shadow: 0 8px 32px var(--shadow-color);
+}
+
+/* Unified Container Deck */
+.deck-container {
+  width: 100%;
+  max-width: 950px;
+  background-color: var(--dash-bg);
+  border: 1px solid var(--control-border);
+  border-radius: 12px;
+  margin-bottom: 24px;
+  box-shadow: 0 4px 12px var(--shadow-color);
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.deck-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 16px;
+  background-color: rgba(255, 255, 255, 0.02);
+  border-bottom: 1px solid var(--card-border);
+}
+
+.deck-title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--primary-yellow);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.toggle-deck-btn {
+  padding: 4px 10px;
+  font-size: 0.72rem;
+}
+
+/* Body Container with Collapse Animation */
+.deck-body {
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  gap: 16px;
+  max-height: 500px;
+  opacity: 1;
+  transition: max-height 0.35s ease, opacity 0.25s ease, padding 0.35s ease;
+  overflow: hidden;
+}
+
+.deck-container.collapsed .deck-body {
+  max-height: 0;
+  opacity: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  pointer-events: none;
+}
+
+.deck-container.collapsed .deck-header {
+  border-bottom: none;
+}
+
+.deck-divider {
+  border: 0;
+  border-top: 1px dashed var(--card-border);
+  margin: 0;
+}
+
+/* Ensure the Defense Deck matches the width and look of the upper Deck */
+#defense-deck {
+  margin-bottom: 30px;
+}
+
+/* Adjust inner grid layout inside the deck body */
+#defense-deck .deck-body {
+  padding: 16px;
+}
+
+/* Reset individual margins for dashboard/control panel to prevent double borders */
+.dashboard {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+  margin-bottom: 0;
+}
+
+.control-panel {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+  margin-bottom: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  justify-content: space-around;
+  align-items: flex-start;
+}
+
+/* --- Pokédex Hover Tooltip Overlay --- */
+.sprite-container {
+  position: relative;
+  height: 130px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 6px 0;
+  z-index: 2;
+  cursor: pointer;
+}
+
+.dex-tooltip {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%) translateY(8px);
+  width: 90%;
+  background: rgba(15, 17, 28, 0.95);
+  border: 1px solid var(--primary-yellow);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.6);
+  border-radius: 8px;
+  padding: 8px 10px;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s;
+  pointer-events: none;
+  z-index: 100;
+  text-align: center;
+}
+
+/* Tooltip Little Arrow */
+.dex-tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 6px;
+  border-style: solid;
+  border-color: var(--primary-yellow) transparent transparent transparent;
+}
+
+.dex-tooltip-title {
+  display: block;
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: var(--primary-yellow);
+  text-transform: uppercase;
+  margin-bottom: 3px;
+  letter-spacing: 0.5px;
+}
+
+.dex-tooltip-desc {
+  font-size: 0.7rem;
+  color: var(--text-color);
+  line-height: 1.35;
+  font-style: italic;
+  margin: 0;
+}
+
+/* Show Tooltip on Hover */
+.sprite-container:hover .dex-tooltip {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* Description Toggle Button in Card Top Bar */
+.desc-btn-tag { 
+  color: var(--primary-yellow); 
+  border-color: rgba(255, 203, 5, 0.3); 
+  background: rgba(255, 203, 5, 0.1); 
+}
+.desc-btn-tag:hover { 
+  background: rgba(255, 203, 5, 0.25); 
+  border-color: var(--primary-yellow); 
+}
+.desc-btn-tag.active { 
+  background: var(--primary-yellow); 
+  color: #000; 
+}
+
+/* Inline Pokédex Description Card */
+.pokedex-desc-box {
+  width: 100%;
+  background-color: var(--stats-bg);
+  border: 1px solid var(--primary-yellow);
+  border-radius: 8px;
+  padding: 8px 10px;
+  margin: 6px 0 8px 0;
+  text-align: center;
+  box-shadow: inset 0 0 8px rgba(255, 203, 5, 0.08);
+  animation: fadeInDesc 0.2s ease-in-out;
+}
+
+.pokedex-desc-header {
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: var(--primary-yellow);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+
+.pokedex-desc-text {
+  font-size: 0.72rem;
+  color: var(--text-color);
+  line-height: 1.35;
+  font-style: italic;
+  margin: 0;
+}
+
+@keyframes fadeInDesc {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
 }
